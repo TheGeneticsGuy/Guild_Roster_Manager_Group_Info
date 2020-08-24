@@ -8,19 +8,40 @@
 GRM_G.Module.GroupInfo = false;
 GRM_G.GroupInfo = {};               -- To keep info accessible globally if needed.
 
+-- Saved Variable
+GRM_GroupInfo_Save = {};
+
 -- Local Globals
-local GRM_GI = {};                  -- Module function table
-local GRMGI_UI = {};                -- Module UI table
+GRM_GI = {};                  -- Module function table
+GRMGI_UI = {};                -- Module UI table
 
 -- Global Variables
 GRM_GI.lock = false;
 GRM_GI.raidIcons = {};
 GRM_GI.compactRaidIcons = {};
 GRM_GI.partyIcons = {};
+GRM_GI.customFrameIcons = {};       -- For addon compatibility
 GRM_GI.optionsLoaded = false;
+
+-- Compatibility frames
+GRM_GI.UIAddonCompatibilityName = "";
+GRM_GI.CustomButtonPosition = {};
+
+-- Compatible addons Enum for distance icon building and their corresponding frames to bind to.
+local customAddon = { 
+    ["ZPerl_RaidFrames"] = { "XPerl_partyXXnameFrame", "XPerl_Raid_GrpXXUnitButtonYYnameFrame" },
+    ["ShadowedUnitFrames"] = { "SUFHeaderpartyUnitButton" , "SUFHeaderraidUnitButton" }, 
+    ["SpartanUI"] = { "SUI_PartyFrameHeaderUnitButton" , "SUF_Spartan_RaidFrames_ClassicRaidUnitButton" },
+    ["Grid"] = { "GridLayoutHeaderXXUnitButtonYY" , "GridLayoutHeader1UnitButton" },
+    ["ElvUI"] = { "ElvUF_PartyGroupXXUnitButtonYY_HealthBar", "ElvUF_RaidGroupXXUnitButtonYY_HealthBar" },
+    ["Vuhdo"] = { "Vd1HXXBgBarIcBarHlBarFlBarLabel" , "Vd1HXXBgBarIcBarHlBarFlBarLabel" },
+    ["TUKUI"] = { "TukuiPartyUnitButton" , "TukuiPartyUnitButton" },
+    ["LunaUnitFrames"] = { "LUFHeaderpartyUnitButton" , "LUFHeaderraidXXUnitButtonYY" }
+};
 
 -- Events
 GRM_GI.EventListener = CreateFrame ( "Frame" );
+GRM_GI.EventListener.timer = 0; -- Prevent spam controls
 
 -- Method:          GRM_GI.GetNumGroupMembersAndStatusDetails()
 -- What it Does:    Returns the number of guildies you are currently grouped with
@@ -61,7 +82,7 @@ GRM_GI.GetNumGroupMembersAndStatusDetails = function()
         total = total + 1;
     end
 
-    return ( total + 1 ) , sameServer , resultCurrent , resultFormer , members , formerMembers , serverMembers;
+    return total , sameServer , resultCurrent , resultFormer , members , formerMembers , serverMembers;
 end
 
 -- Method:          GRM_GI.GetNamesOfPlayersSameServer()
@@ -197,13 +218,23 @@ GRM_GI.UpdateGroupInfo = function( forcedFullRefresh )
         unit = group .. i;
         name = GRM_GI.GetUnitFullName ( unit );
 
-        if name and name ~= GRM_G.addonUser then
+        if name then
             tempListNames[name] = {};
             tempListNames[name].guid = UnitGUID( unit );
             tempListNames[name].class = select ( 2 , UnitClass ( unit ) );
-            tempListNames[name].unitID = group .. i;
+            if name == GRM_G.addonUser then
+                tempListNames[name].unitID = "self";
+            else
+                tempListNames[name].unitID = group .. i;
+            end
         end
 
+        if i == n and not tempListNames[GRM_G.addonUser] then
+            tempListNames[GRM_G.addonUser] = {};
+            tempListNames[GRM_G.addonUser].guid = guildData[GRM_G.addonUser].GUID;
+            tempListNames[GRM_G.addonUser].class = guildData[GRM_G.addonUser].class;
+            tempListNames[GRM_G.addonUser].unitID = "self";
+        end
     end
 
     -- Now, we do cleanup of names of players no longer in group.
@@ -218,7 +249,7 @@ GRM_GI.UpdateGroupInfo = function( forcedFullRefresh )
     -- Now we add new names
     for player , unitInfo in pairs ( tempListNames ) do
         -- If the player has not been built the first time, now build it.
-        if GRM_G.GroupInfo[ player ] == nil or forcedFullRefresh then
+        if GRM_G.GroupInfo[ player ] == nil or ( GRM_G.GroupInfo[ player ] ~= nil and GRM_G.GroupInfo[ player ].unitID ~= unitInfo.unitID ) or forcedFullRefresh then
             GRM_G.GroupInfo[ player ] = {};
 
             -- Check if current guildie
@@ -288,12 +319,17 @@ GRM_GI.UpdateGroupInfo = function( forcedFullRefresh )
 
         -- Rebuild these values every time anyway
         GRM_G.GroupInfo[ player ].unitID = unitInfo.unitID;
-        GRM_G.GroupInfo[ player ].canTrade = CheckInteractDistance ( unitInfo.unitID , 2 );
+        if GRM_G.GroupInfo[ player ].unitID == "self" then
+            GRM_G.GroupInfo[ player ].canTrade = false;
+        else
+            GRM_G.GroupInfo[ player ].canTrade = CheckInteractDistance ( unitInfo.unitID , 2 );
+        end
     end
 
     -- Do every time this updates as needed
     GRM_GI.EstablishGroupIcons();
 end
+
 
 -- Method:          GRMGI_UI.LocalizeButtonFrame()
 -- What it Does:    Reprocesses the font selection in case players change their settings
@@ -370,7 +406,6 @@ GRM_GI.SetValueButtonFrame = function ( type , buttonDetails , sizeBiggest )
         local mainTag = GRM_G.MainTagHexCode .. GRM.GetMainTags ( false , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].mainTagIndex ) .. "|r";
         local altTag = GRM_G.MainTagHexCode .. GRM.GetAltTags ( false , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].mainTagIndex ) .. "|r"
         local numAltsStillInGuild = GRM_GI.GetNumAltsStillInGuild ( player.alts );
-        
 
         if player.isMain then
             name = name .. mainTag;
@@ -410,7 +445,11 @@ GRM_GI.SetValueButtonFrame = function ( type , buttonDetails , sizeBiggest )
     size = GRMGI_UI.GRM_GroupButtonFrame.GroupFrameFontStringTest:GetWidth();
     size = size + 10;   -- for some leeway
     if sizeBiggest < size then
-        sizeBiggest = size;
+        if ( size - sizeBiggest ) < 10 then
+            sizeBiggest = sizeBiggest + 10;
+        else
+            sizeBiggest = size;
+        end
     end
 
     buttonDetails[1]:Show();
@@ -437,7 +476,7 @@ GRM_GI.ConfigureTradeDistanceIcon = function ( button )
     button.tradeDistanceIcon:Hide();
 
 end
--- /run local b=GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[1];b[4]:SetPoint( "CENTER" , b[5] , -4.5 , 3.5 );
+
 GRM_GI.BuildGroupButtonFrame = function()
     local total , sameServer , currMembers , formerMembers , guildies , formerGuildies , serverMembers = GRM_GI.GetNumGroupMembersAndStatusDetails();
     local red = "|CFFFF0000";
@@ -651,7 +690,7 @@ GRM_GI.BuildGroupButtonFrame = function()
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][3]:SetPoint ( "LEFT" , GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1] , "RIGHT" );
         
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetScript ( "OnEnter" , function ( self )
-                    GRM_GI.BuildFormerMemberTooltip( self , x );
+                    GRM_GI.BuildServerMemberTooltip( self , x );
                 end);
     
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetScript ( "OnLeave" , function ()
@@ -701,7 +740,11 @@ end
 GRM_GI.RebuildInteractInformation = function()
     local needsRebuild = false;
     for _ , player in pairs ( GRM_G.GroupInfo ) do
-        local playerCanTrade = CheckInteractDistance ( player.unitID , 2 );
+        local playerCanTrade = false;
+        
+        if player.unitID ~= "self" then
+            CheckInteractDistance ( player.unitID , 2 );
+        end
 
         if playerCanTrade ~= player.canTrade then
             player.canTrade = playerCanTrade;
@@ -812,10 +855,7 @@ GRM_GI.BuildServerMemberTooltip = function ( button , ind )
     if player.canTrade then
         GameTooltip:AddLine ( GRM.L ( "Close Enough to Trade" ) , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[1] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[2] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[3] );
     end
-    GameTooltip:AddLine ( " " );
-
     GameTooltip:Show();
-
 end
 
 -- Method:          GRM_GI.RegisterGroupEvents()
@@ -823,6 +863,24 @@ end
 -- Purpose:         To know when a new player joins the group or leaves the group
 GRM_GI.RegisterGroupEvents = function()
     GRM_GI.EventListener:RegisterEvent ( "GROUP_ROSTER_UPDATE" );
+    GRM_GI.EventListener:RegisterEvent ( "GROUP_LEFT" );
+    GRM_GI.EventListener:RegisterEvent ( "PLAYER_ROLES_ASSIGNED" );
+end
+
+-- Method:          GRM_GI.GroupCheckRepeatControl()
+-- What it Does:    It rechecks the groupRosterStatus 3 times, jsut in case, due to variouus reasons, the server doesn't communicate back group status quick enough.
+-- Purpose:         The button may not appear if it doesn't register group statuss instantly. This ensures the check.
+GRM_GI.GroupCheckRepeatControl = function ( count )
+    GRM_GI.GroupRosterUpdate();
+    count = count + 1;
+
+    if count < 4 then
+        
+        C_Timer.After ( 1 , function()
+            GRM_GI.GroupCheckRepeatControl ( count );
+        end);
+
+    end
 end
 
 -- Method:          GRM_GI.EventListener()
@@ -830,8 +888,14 @@ end
 -- Purpose:         Event listening control
 GRM_GI.EventListener:SetScript ( "OnEvent" , function( _ , eventName )
 
-    if eventName == "GROUP_ROSTER_UPDATE" then
-        GRM_GI.GroupRosterUpdate();
+    -- Sometimes there is a delay with the server, so we are going to trigger it 3 times to check
+    if ( time() - GRM_GI.EventListener.timer ) >= 3.1 then
+        
+        C_Timer.After ( 1 , function()
+            GRM_GI.GroupCheckRepeatControl ( 1 );
+        end);
+
+        GRM_GI.EventListener.timer = time();
     end
 
 end);
@@ -900,48 +964,153 @@ end
 -- What it Does:    It hides all the icons
 -- Purpose:         Useful to hide them all if a player leaves group or leaves guild
 GRM_GI.HideAllIcons = function()
-    local buttons = { GRM_GI.raidIcons , GRM_GI.compactRaidIcons , GRM_GI.partyIcons };
+    local buttons = { GRM_GI.raidIcons , GRM_GI.compactRaidIcons , GRM_GI.partyIcons , GRM_GI.customFrameIcons };
 
     for i = 1 , #buttons do
-        for j = 1 , #buttons[i] do
-            buttons[i][j][1].tradeDistanceIconBorder:Hide();
-            buttons[i][j][1].tradeDistanceIcon:Hide();
+        if i < 4 then
+            for j = 1 , #buttons[i] do
+                buttons[i][j][1].tradeDistanceIconBorder:Hide();
+                buttons[i][j][1].tradeDistanceIcon:Hide();
+            end
+        else
+            for j = 1 , #buttons[i] do
+                for k = 1 , #buttons[i][j] do
+                    if buttons[i][j][k] ~= false then
+                        buttons[i][j][k][1].tradeDistanceIconBorder:Hide();
+                        buttons[i][j][k][1].tradeDistanceIcon:Hide();
+                    end
+                end
+            end
         end
     end
 end
 
 -- MISC UI BUILDING
-
--- Method:          GRM_GI.ConfigureRaidAndPartyIcons ( Object/Button , bool )
+-- Method:          GRM_GI.ConfigureRaidAndPartyIcons ( Object/Button , bool , int )
 -- What it Does:    Sets the texture and dimensions and position of the icon on each of the buttons
 -- Purpose:         Useful texture indictator if someone is within inspection distance of you
-GRM_GI.ConfigureRaidAndPartyIcons = function ( button , tag  )
+GRM_GI.ConfigureRaidAndPartyIcons = function ( button , tag , frameIndex )
     local wBorder = 15;
     local hBorder = -3.5;
     local anchor1 = "RIGHT";
     local anchor2 = "RIGHT";
     local color = GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm;
+    local textureSize = { 18 , 6 };
 
     if tag == "micro" then
-        wBorder = 7;
-        hBorder = -7;
+        wBorder = 8;
+        hBorder = -8;
         anchor1 = "BOTTOMRIGHT";
         anchor2 = "BOTTOMRIGHT";
 
     elseif tag == "party" then
         wBorder = 10
 
+    elseif tag == "custom" then
+
+        if GRM_GI.UIAddonCompatibilityName == "ZPerl_RaidFrames" then
+            if frameIndex == 1 then
+                wBorder = -2;
+                hBorder = -5;
+                anchor1 = "LEFT";
+                anchor2 = "RIGHT";
+            elseif frameIndex == 2 then
+                wBorder = 7;
+                hBorder = -2;
+                anchor1 = "TOPRIGHT";
+                anchor2 = "TOPRIGHT";
+            end
+            
+        elseif GRM_GI.UIAddonCompatibilityName == "SpartanUI" then
+            
+            anchor1 = "TOPRIGHT";
+            anchor2 = "TOPRIGHT";
+
+            if frameIndex == 1 then
+                hBorder = -5;
+                wBorder = -20;
+            else
+                hBorder = -1;
+                wBorder = 7;
+            end
+
+        elseif GRM_GI.UIAddonCompatibilityName == "Grid" or GRM_GI.UIAddonCompatibilityName == "Vuhdo" or GRM_GI.UIAddonCompatibilityName == "ShadowedUnitFrames" then
+
+            if GRM_GI.UIAddonCompatibilityName == "ShadowedUnitFrames" then
+                if frameIndex == 1 then
+                    wBorder = -2;
+                    hBorder = -5;
+                    anchor1 = "LEFT";
+                    anchor2 = "RIGHT";
+                    button.tradeDistanceIconBorder:SetPoint ( anchor1 , button , anchor2 , wBorder , hBorder );
+                elseif frameIndex == 2 then
+                    wBorder = 0;
+                    hBorder = 0;
+                    anchor1 = "TOPLEFT";
+                    anchor2 = "TOPLEFT";
+                    button.hiddenFrame:SetPoint ( anchor1 , button.highFrame , anchor2 , wBorder , hBorder );
+                    button.hiddenFrame:SetSize ( 12 , 12 );
+                    button.tradeDistanceIconBorder:SetPoint ( "CENTER" , button.hiddenFrame );
+                end
+            else
+                wBorder = 5;
+                hBorder = -5;
+                anchor1 = "BOTTOMRIGHT";
+                anchor2 = "BOTTOMRIGHT";
+                button.hiddenFrame:SetPoint ( anchor1 , button , anchor2 , wBorder , hBorder );
+                button.hiddenFrame:SetSize ( 12 , 12 );
+                button.tradeDistanceIconBorder:SetPoint ( "CENTER" , button.hiddenFrame );
+            end
+
+            textureSize = { 14 , 4 };
+
+        elseif GRM_GI.UIAddonCompatibilityName == "ElvUI" or GRM_GI.UIAddonCompatibilityName == "TUKUI" then
+            if GRM_GI.UIAddonCompatibilityName == "TUKUI" then
+                wBorder = 4.5;
+                hBorder = -1
+            else
+                wBorder = 7;
+                hBorder = 0
+            end
+            
+            anchor1 = "TOPRIGHT";
+            anchor2 = "TOPRIGHT";
+            button.hiddenFrame:SetPoint ( anchor1 , button , anchor2 , wBorder , hBorder );
+            button.hiddenFrame:SetSize ( 12 , 12 );
+            button.tradeDistanceIconBorder:SetPoint ( "CENTER" , button.hiddenFrame );
+            textureSize = { 16 , 5 };
+
+        elseif GRM_GI.UIAddonCompatibilityName == "LunaUnitFrames" then
+            if frameIndex == 1 then
+                wBorder = 1;
+                hBorder = -3;
+                anchor1 = "TOPLEFT";
+                anchor2 = "TOPRIGHT";
+                button.tradeDistanceIconBorder:SetPoint ( anchor1 , button , anchor2 , wBorder , hBorder ); 
+            elseif frameIndex == 2 then
+                wBorder = 2;
+                hBorder = -2;
+                anchor1 = "TOPLEFT";
+                anchor2 = "TOPLEFT";
+                textureSize = { 14 , 4 };
+                button.hiddenFrame:SetPoint ( anchor1 , button.highFrame , anchor2 , wBorder , hBorder );
+                button.hiddenFrame:SetSize ( 12 , 12 );
+                button.tradeDistanceIconBorder:SetPoint ( "CENTER" , button.hiddenFrame );
+            end
+        end
+        
+    end
+    
+    if tag ~= "custom" or ( tag == "custom" and ( GRM_GI.UIAddonCompatibilityName == "ZPerl_RaidFrames" or GRM_GI.UIAddonCompatibilityName == "SpartanUI" ) ) then
+        button.tradeDistanceIconBorder:SetPoint ( anchor1 , button , anchor2 , wBorder , hBorder );        
     end
 
-    button.tradeDistanceIconBorder:SetPoint ( anchor1 , button , anchor2 , wBorder , hBorder );
     button.tradeDistanceIconBorder:SetTexture ( "Interface\\Minimap\\MiniMap-TrackingBorder" );
-    button.tradeDistanceIconBorder:SetWidth ( 18 );
-    button.tradeDistanceIconBorder:SetHeight ( 18 );
+    button.tradeDistanceIconBorder:SetSize ( textureSize[1] , textureSize[1] );
 
     button.tradeDistanceIcon:SetPoint ( "CENTER" , button.tradeDistanceIconBorder , -4 , 3.5 );
     button.tradeDistanceIcon:SetColorTexture ( color[1] , color[2] , color[3] );
-    button.tradeDistanceIcon:SetWidth ( 6 );
-    button.tradeDistanceIcon:SetHeight ( 6 );
+    button.tradeDistanceIcon:SetSize ( textureSize[2] , textureSize[2] );
 
     button.tradeDistanceIconBorder:Hide();
     button.tradeDistanceIcon:Hide();
@@ -954,14 +1123,18 @@ GRM_GI.EstablishGroupIcons = function()
 
     if IsInGroup() then
         if IsInRaid() then
-            if #GRM_GI.raidIcons == 0 then
+            if #GRM_GI.raidIcons < 40 then
                 for i = 1 , 40 do
                     button = _G["RaidGroupButton" .. i];
-                    button.tradeDistanceIconBorder = button:CreateTexture ( "raidTradeDistanceIconBorder" .. i , "OVERLAY" );
-                    button.tradeDistanceIcon = button:CreateTexture ( "raidTradeDistanceIcon" .. i , "ARTWORK" );
-                    GRM_GI.raidIcons[i] = { button , button.tradeDistanceIconBorder , button.tradeDistanceIcon };
+                    if button ~= nil then
+                        button.tradeDistanceIconBorder = button:CreateTexture ( "raidTradeDistanceIconBorder" .. i , "OVERLAY" );
+                        button.tradeDistanceIcon = button:CreateTexture ( "raidTradeDistanceIcon" .. i , "ARTWORK" );
+                        GRM_GI.raidIcons[i] = { button , button.tradeDistanceIconBorder , button.tradeDistanceIcon };
 
-                    GRM_GI.ConfigureRaidAndPartyIcons ( button , "raid" );
+                        GRM_GI.ConfigureRaidAndPartyIcons ( button , "raid" );
+                    else
+                        break;
+                    end
                 end
             end
 
@@ -973,7 +1146,7 @@ GRM_GI.EstablishGroupIcons = function()
                         if button ~= nil then
                             button.tradeDistanceIconBorder = button:CreateTexture ( "raidTradeDistanceIconBorder" .. i , "OVERLAY" );
                             button.tradeDistanceIcon = button:CreateTexture ( "raidTradeDistanceIcon" .. i , "ARTWORK" );
-                            GRM_GI.compactRaidIcons[i] = { button , button.tradeDistanceIconBorder , button.tradeDistanceIcon , button.name:GetText() };
+                            GRM_GI.compactRaidIcons[i] = { button , button.tradeDistanceIconBorder , button.tradeDistanceIcon };
 
                             GRM_GI.ConfigureRaidAndPartyIcons ( button , "micro" );
                         else
@@ -984,18 +1157,170 @@ GRM_GI.EstablishGroupIcons = function()
             end
 
         else
-            if #GRM_GI.partyIcons == 0 then
+            if #GRM_GI.partyIcons < 4 then
                 for i = 1 , 4 do
                     button = _G["PartyMemberFrame" .. i];
-                    button.tradeDistanceIconBorder = button:CreateTexture ( "raidTradeDistanceIconBorder" .. i , "OVERLAY" );
-                    button.tradeDistanceIcon = button:CreateTexture ( "raidTradeDistanceIcon" .. i , "ARTWORK" );
-                    GRM_GI.partyIcons[i] = { button , button.tradeDistanceIconBorder , button.tradeDistanceIcon , button.name:GetText() };
+                    if button ~= nil then
+                        button.tradeDistanceIconBorder = button:CreateTexture ( "raidTradeDistanceIconBorder" .. i , "OVERLAY" );
+                        button.tradeDistanceIcon  = button:CreateTexture ( "raidTradeDistanceIcon" .. i , "ARTWORK" );
+                        GRM_GI.partyIcons[i] = { button , button.tradeDistanceIconBorder , button.tradeDistanceIcon };
 
-                    GRM_GI.ConfigureRaidAndPartyIcons ( button , "party" );
+                        GRM_GI.ConfigureRaidAndPartyIcons ( button , "party" );
+                    else
+                        break;
+                    end
                 end
             end
         end
+        
+        -- Custom addon frames
+        if GRM_GI.UIAddonCompatibilityName ~= "" then
+            local special = 0;
+            local groupSizeEnum = { [1] = 5 , [2] = 40 };       -- Party vs Raid - just some resource efficiency
+
+            for i = 1 , #customAddon[GRM_GI.UIAddonCompatibilityName] do
+                if not GRM_GI.customFrameIcons[i] then
+                    GRM_GI.customFrameIcons[i] = {};
+                end
+                if i == 2 then
+                    special = 0;
+                end
+
+                for j = 1 , groupSizeEnum[i] do
+                    if not GRM_GI.customFrameIcons[i][j] or ( i == 2 and GRM_GI.customFrameIcons[i][j] == {} ) then
+                        special = special + 1;                        
+                        button = _G[ GRM_GI.GetCustomUIButtonName ( customAddon[GRM_GI.UIAddonCompatibilityName][i] , j , special ) ];
+
+                        -- Special extra modifier of button name
+                        if special == 5 then
+                            special = 0;
+                        end
+                        
+                        if button ~= nil then
+                            local layer, layer2 = "OVERLAY" , "ARTWORK";
+
+                            if GRM_GI.UIAddonCompatibilityName == "Grid" or GRM_GI.UIAddonCompatibilityName == "ElvUI" or GRM_GI.UIAddonCompatibilityName == "Vuhdo" or GRM_GI.UIAddonCompatibilityName == "TUKUI" or ( i == 2 and ( GRM_GI.UIAddonCompatibilityName == "ShadowedUnitFrames" or GRM_GI.UIAddonCompatibilityName == "LunaUnitFrames" ) ) then
+
+                                if GRM_GI.UIAddonCompatibilityName == "ShadowedUnitFrames" or GRM_GI.UIAddonCompatibilityName == "LunaUnitFrames" then
+                                    button.hiddenFrame = CreateFrame ( "Frame" , "GRM_HiddenTexture" .. i .. "_" .. j , button.highFrame );
+
+                                elseif GRM_GI.UIAddonCompatibilityName == "TUKUI" then
+                                    button.hiddenFrame = CreateFrame ( "Frame" , "GRM_HiddenTexture" .. i .. "_" .. j , button.Health );
+
+                                else
+                                    button.hiddenFrame = CreateFrame ( "Frame" , "GRM_HiddenTexture" .. i .. "_" .. j , button );
+
+                                end
+
+                                button.tradeDistanceIconBorder = button.hiddenFrame:CreateTexture ( "raidTradeDistanceIconBorder" .. i .. "_" .. j , layer , nil , 1 );
+                                button.tradeDistanceIcon = button.hiddenFrame:CreateTexture ( "raidTradeDistanceIcon" .. i .. "_" .. j , layer ) , nil , 1 ;
+                                GRM_GI.customFrameIcons[i][j] = { button , button.tradeDistanceIconBorder , button.tradeDistanceIcon };
+
+                            else
+                                button.tradeDistanceIconBorder = button:CreateTexture ( "raidTradeDistanceIconBorder" .. i .. "_" .. j , layer , nil , 1 );
+                                button.tradeDistanceIcon = button:CreateTexture ( "raidTradeDistanceIcon" .. i .. "_" .. j , layer2 ) , nil , 1 ;
+                                GRM_GI.customFrameIcons[i][j] = { button , button.tradeDistanceIconBorder , button.tradeDistanceIcon };
+                            end
+
+                            GRM_GI.ConfigureRaidAndPartyIcons ( button , "custom" , i );
+                        elseif i == 2 then
+                            GRM_GI.customFrameIcons[i][j] = false;
+                        end
+                    end
+                end
+            end
+            
+        end
     end
+end
+
+-- Method:          GRM_GI.GetCustomUIButtonName ( string , int , int )
+-- What it Does:    Returns the proper button name based on custom UI formatting.
+-- Purpose:         Modifier for increased compatibility with all addons and a universal formatting for single function use among all.
+GRM_GI.GetCustomUIButtonName = function ( buttonName , j , special )
+    local result = buttonName;
+
+    if string.find ( result , "XX" ) ~= nil then
+
+        if GRM_GI.UIAddonCompatibilityName ~= "Vuhdo" then
+            local group = 0;
+
+            if j < 6 then
+                group = 1;
+            elseif j < 11 then
+                group = 2;
+            elseif j < 16 then
+                group = 3;
+            elseif j < 21 then
+                group = 4;
+            elseif j < 26 then
+                group = 5;
+            elseif j < 31 then
+                group = 6;
+            elseif j < 36 then
+                group = 7;
+            elseif j < 41 then
+                group = 8;
+            end
+        
+            result = string.gsub ( string.gsub ( result , "XX" , group ) , "YY" , special );
+
+        else
+            result = string.gsub ( result , "XX" , j )
+        end
+    else
+        result = result .. j;
+    end;
+
+    return result;
+end
+
+-- Method:          GRM_GI.GetCustomAddonUnitName ( button )
+-- What it Does:    Returns the string text unit name of the given raid/party button
+-- Purpose:         For compatibility with all other addons, this brings in the ability to grab the name no matter what addon is being used
+GRM_GI.GetCustomAddonUnitName = function ( button )
+    local name , server;
+
+    if button:IsVisible() then
+        if GRM_GI.UIAddonCompatibilityName == "ShadowedUnitFrames" or GRM_GI.UIAddonCompatibilityName == "SpartanUI" or GRM_GI.UIAddonCompatibilityName == "TUKUI" or GRM_GI.UIAddonCompatibilityName == "LunaUnitFrames" then
+            name , server = UnitName ( button.unit );
+
+        elseif GRM_GI.UIAddonCompatibilityName == "ZPerl_RaidFrames" then
+            name , server = UnitName ( _G[ string.match ( button:GetName() , "(.+)nameFrame" ) ].partyid );
+
+        elseif GRM_GI.UIAddonCompatibilityName == "Grid" then
+            local n , s = select ( 6 , GetPlayerInfoByGUID ( button.unitGUID ) );
+
+            if n ~= nil and n ~= "" then
+                if s == "" then
+                    name = n .. "-" .. GRM_G.realmName;
+                else
+                    name = n .. "-" .. s;
+                end
+            end
+
+        elseif GRM_GI.UIAddonCompatibilityName == "Vuhdo" then
+            name , server = UnitName ( _G[ string.match ( button:GetName() , "(.+)BgBarIcBarHlBarFlBarLabel" ) ].raidid );
+
+        elseif GRM_GI.UIAddonCompatibilityName == "ElvUI" then
+
+            local idUnit = _G[ string.match ( button:GetName() , "(.+)_HealthBar" ) ];
+
+            if idUnit.unit ~= nil then
+                name , server = UnitName ( idUnit.unit );
+
+            elseif idUnit.id ~= nil then
+
+                local t = { [true] = "raid" , [false] = "party" };
+                name , server = UnitName ( t[IsInRaid()] .. id );
+            end
+        end
+
+        if name ~= nil and server ~= nil and server ~= "" and string.find ( name , "-" ) == nil then
+            name = name .. "-" .. server;
+        end
+    end
+    return name;
 end
 
 -- Method:          GRM_GI.RefreshRaidInteractIconVisibility()
@@ -1004,6 +1329,36 @@ end
 GRM_GI.RefreshRaidInteractIconVisibility = function()
 
     local name = "";
+    local nameTest = ""
+
+    local customAddonIcons = function()
+
+        for i = 1 , #GRM_GI.customFrameIcons do
+            for j = 1 , #GRM_GI.customFrameIcons[i] do
+                if GRM_GI.customFrameIcons[i][j] ~= false then
+                    nameTest = GRM_GI.GetCustomAddonUnitName ( GRM_GI.customFrameIcons[i][j][1] );
+                    if nameTest ~= nil and nameTest ~= UnitName ( "PLAYER" ) then
+                        name = GRM.AppendSameServerName ( nameTest );
+                        if GRM_G.GroupInfo[name] ~= nil and GRM_G.GroupInfo[name].canTrade then
+                            GRM_GI.customFrameIcons[i][j][2]:Show();
+                            GRM_GI.customFrameIcons[i][j][3]:Show();
+                        else
+                            GRM_GI.customFrameIcons[i][j][2]:Hide();
+                            GRM_GI.customFrameIcons[i][j][3]:Hide();
+                        end
+                
+                    else
+                        if GRM_GI.customFrameIcons[i][j][1]:IsVisible() then
+                            GRM_GI.customFrameIcons[i][j][2]:Hide();
+                            GRM_GI.customFrameIcons[i][j][3]:Hide();
+                        end
+                    end
+                end
+                
+            end
+        end
+
+    end
 
     if IsInRaid() then
 
@@ -1026,18 +1381,19 @@ GRM_GI.RefreshRaidInteractIconVisibility = function()
                         GRM_GI.raidIcons[i][2]:Hide();
                         GRM_GI.raidIcons[i][3]:Hide();
                     end
-                    -- An exit rather than processing the whole list
-                    if GRM_GI.raidIcons[i][1].name ~= UnitName ( "PLAYER" ) then
-                        break;
-                    end
                 end
             end
         end
 
         -- This is for the core raid Frame that now exists in retail
         for i = 1 , #GRM_GI.compactRaidIcons do
-            if GRM_GI.compactRaidIcons[i][4] ~= nil and GRM_GI.compactRaidIcons[i][4] ~= UnitName ( "PLAYER" ) then
-                name = GRM.AppendSameServerName ( GRM_GI.compactRaidIcons[i][4] );
+            if GRM_GI.compactRaidIcons[i][1].name ~= nil then
+                nameTest = GRM_GI.compactRaidIcons[i][1].name:GetText();
+            else
+                nameTest = nil;
+            end
+            if nameTest ~= nil and nameTest ~= UnitName ( "PLAYER" ) then
+                name = GRM.AppendSameServerName ( nameTest );
         
                 if GRM_G.GroupInfo[name] ~= nil and GRM_G.GroupInfo[name].canTrade then
                     GRM_GI.compactRaidIcons[i][2]:Show();
@@ -1052,19 +1408,22 @@ GRM_GI.RefreshRaidInteractIconVisibility = function()
                     GRM_GI.compactRaidIcons[i][2]:Hide();
                     GRM_GI.compactRaidIcons[i][3]:Hide();
                 end
-                -- An exit rather than processing the whole list
-                if GRM_GI.compactRaidIcons[i][4] ~= UnitName ( "PLAYER" ) then
-                    break;
-                end
             end
         end
+
+        customAddonIcons();
 
     else
 
         -- This is for the Party icons
         for i = 1 , #GRM_GI.partyIcons do
-            if GRM_GI.partyIcons[i][4] ~= nil and GRM_GI.partyIcons[i][4] ~= UnitName ( "PLAYER" ) then
-                name = GRM.AppendSameServerName ( GRM_GI.partyIcons[i][4] );
+            if GRM_GI.partyIcons[i][1].name ~= nil then
+                nameTest = GRM_GI.partyIcons[i][1].name:GetText();
+            else
+                nameTest = nil;
+            end
+            if nameTest ~= nil and nameTest ~= UnitName ( "PLAYER" ) then
+                name = GRM.AppendSameServerName ( nameTest );
         
                 if GRM_G.GroupInfo[name] ~= nil and GRM_G.GroupInfo[name].canTrade then
                     GRM_GI.partyIcons[i][2]:Show();
@@ -1080,11 +1439,14 @@ GRM_GI.RefreshRaidInteractIconVisibility = function()
                     GRM_GI.partyIcons[i][3]:Hide();
                 end
                 -- An exit rather than processing the whole list
-                if GRM_GI.partyIcons[i][4] ~= UnitName ( "PLAYER" ) then
+                if nameTest ~= UnitName ( "PLAYER" ) then
                     break;
                 end
             end
         end
+
+        customAddonIcons();
+        
     end
 
     if GRMGI_UI.GRM_GroupButtonFrame:IsVisible() then
@@ -1120,7 +1482,9 @@ end
 -- Purpose:         Icon identifier controls
 GRM_GI.UpdateInteractDistance = function()
     for _ , player in pairs ( GRM_G.GroupInfo ) do
-        player.canTrade = CheckInteractDistance ( player.unitID , 2 );
+        if player.unitID ~= "self" then
+            player.canTrade = CheckInteractDistance ( player.unitID , 2 );
+        end
     end
 end
 
@@ -1128,20 +1492,7 @@ end
 -- What it Does:    Adjusts the position of the button depending on if the raid window is open or not
 -- Purpose:         Flexible adjustment of the location of the GMR Group Info frame
 GRM_GI.SetGroupInfoButtonPosition = function()
-    if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.enabled and IsInGuild() and ( ( RaidFrame:IsVisible() and IsInRaid() ) or CompactRaidFrameManager:IsVisible() ) then
-        GRMGI_UI.GRM_GroupRulesButton:ClearAllPoints();
-
-        if RaidFrame:IsVisible() and IsInRaid() then
-            GRMGI_UI.GRM_GroupRulesButton:SetPoint ( "BOTTOMRIGHT" , FriendsFrame , "TOPRIGHT" , 2 , 2 );
-
-        elseif CompactRaidFrameManager:IsVisible() then
-            if not IsInRaid() and IsInGroup() and PartyMemberFrame1:IsVisible() then
-                GRMGI_UI.GRM_GroupRulesButton:SetPoint ( "BOTTOMRIGHT" , PartyMemberFrame1 , "TOPRIGHT" , -5 , 5 );
-            elseif IsInRaid() and CompactRaidFrameContainer:IsVisible() then
-                GRMGI_UI.GRM_GroupRulesButton:SetPoint ( "BOTTOMRIGHT" , CompactRaidFrameContainerBorderFrame , "TOPRIGHT" , -3 , 3 );
-            end
-
-        end
+    if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.enabled and IsInGuild() and ( IsInRaid() or IsInGroup() ) and GRM_GI.GetNumGroupMembersAndStatusDetails() > 1 then
 
         if not GRMGI_UI.GRM_GroupRulesButton:IsVisible() then
             GRMGI_UI.GRM_GroupRulesButton:Show();
@@ -1177,43 +1528,93 @@ GRMGI_UI.GRM_GroupButtonFrame.TextFromServer = GRMGI_UI.GRM_GroupButtonFrame:Cre
 
 GRMGI_UI.GRM_GroupButtonFrame.GroupFrameFontStringTest = GRMGI_UI.GRM_GroupButtonFrame:CreateFontString ( "GroupFrameFontStringTest" , "OVERLAY" , "GameFontWhiteTiny" );
 
+-- Method:          GRMGI_UI.EstablishAddonCompatibility()
+-- What it Does:    Identifies which UI addon the player is using, if any.
+-- Purpose:         To be able to integrate compatibility with these other UIs.
+GRMGI_UI.EstablishAddonCompatibility = function()
+    GRM_GI.UIAddonCompatibilityName = "";
+
+    for addon , _ in pairs ( customAddon ) do
+        if IsAddOnLoaded ( addon ) then
+            GRM_GI.UIAddonCompatibilityName = addon;
+            break;
+        end
+    end 
+end
+
+-- Method:          GRMGI_UI.GroupInfoButtonUpdatePos()
+-- What it Does:    Updates the position of the Group Info module to the default position, either for a bare GRM, or for one of the custom supported UIs.
+-- Purpose:         Quality control of button placement.
+GRMGI_UI.GroupInfoButtonUpdatePos = function()
+    GRMGI_UI.GRM_GroupRulesButton:ClearAllPoints();
+    GRMGI_UI.GRM_GroupRulesButton:SetPoint ( GRM_GI.CustomButtonPosition[1] , UIParent , GRM_GI.CustomButtonPosition[2] , GRM_GI.CustomButtonPosition[3] , GRM_GI.CustomButtonPosition[4] );
+end
+
+
+-- Method:          GRMGI_UI.GroupInfoButtonInit()
+-- What it Does     Initializes the button position values for custom placement on UIParent
+-- Purpose:         Customizable and movable button
+GRMGI_UI.GroupInfoButtonInit = function()
+
+    if not GRM_GroupInfo_Save[GRM_G.addonUser] then
+        GRM_GroupInfo_Save[GRM_G.addonUser] = { "CENTER" , "CENTER" , -200 , 0 };
+    end
+    
+    GRM_GI.CustomButtonPosition = GRM_GroupInfo_Save[GRM_G.addonUser];
+    GRMGI_UI.GroupInfoButtonUpdatePos();
+
+end
+
+-- Method:          GRM_UI.ResetGroupInfoButtonToDefault()
+-- What it Does:    Sets the button back to default positions based on compatible UI
+-- Purpose:         Increased functionality and control of button placement.
+GRMGI_UI.ResetGroupInfoButtonToDefault = function()
+    GRM_GI.CustomButtonPosition = nil;
+    GRM_GI.CustomButtonPosition = {};
+    GRM_GroupInfo_Save[GRM_G.addonUser] = { "CENTER" , "CENTER" , -200 , 0 };
+    GRMGI_UI.GroupInfoButtonInit();
+end
+
 -- Method:          GRMGI_UI.LoadUI()
 -- What it Does:    Loads the module's UI frames
 -- Purpose:         Compartmentalize the load for on-demand use and to avoid using if not guilded.
 GRMGI_UI.LoadUI = function()
     GRMGI_UI.InitializeUIFrames();
     GRM_UI.InitializeLocalizations();
+    
+    GRMGI_UI.EstablishAddonCompatibility();
+    GRMGI_UI.GroupInfoButtonInit();
 
     -- Double Check if windows are already open
     if ( RaidFrame:IsVisible() and IsInRaid() ) or ( CompactRaidFrameManager:IsVisible() and IsInGroup() ) then
-        
         GRM_GI.EstablishGroupIcons();
-        GRM_GI.SetGroupInfoButtonPosition();
-
     end
+    GRM_GI.SetGroupInfoButtonPosition();
 end
 
 -- Method:          GRMGI_UI.InitializeUIFrames()
 -- What it Does:    Builds every Group info Module UI frame and their values, initializing them and pinning them to core GRM
 -- Purpose:         Compartmentalize the load for on-demand use
 GRMGI_UI.InitializeUIFrames = function()
-
-    GRMGI_UI.GRM_GroupRulesButton:SetSize ( 80 , 21 );
+    GRMGI_UI.GRM_GroupRulesButton:SetSize ( 90 , 25 );
+    GRMGI_UI.GRM_GroupRulesButton:SetMovable ( false );
+    GRMGI_UI.GRM_GroupRulesButton:RegisterForDrag ( "LeftButton" );
     GRMGI_UI.GRM_GroupRulesButton.Text:SetPoint ( "CENTER" , GRMGI_UI.GRM_GroupRulesButton );
     GRMGI_UI.GRM_GroupRulesButton.Timer = 0;
 
     GRMGI_UI.GRM_GroupRulesButton:SetScript ( "OnClick" , function ( _ , button )
         if button == "LeftButton" then
-            GRM_GI.lock = true;
-            GRM_GI.UpdateGroupInfo ( true );
-            GRM_GI.BuildGroupButtonFrame();
-            GRMGI_UI.GRM_GroupButtonFrame.GRM_GroupButtonFrameCloseButton:Show();
+            if ( RaidFrame:IsVisible() and IsInRaid() ) or not IsControlKeyDown() then
+                GRM_GI.lock = true;
+                GRM_GI.UpdateGroupInfo ( true );
+                GRM_GI.BuildGroupButtonFrame();
+                GRMGI_UI.GRM_GroupButtonFrame.GRM_GroupButtonFrameCloseButton:Show();
 
-            if GameTooltip:IsVisible() then
-                GRM_UI.RestoreTooltipScale();
-                GameTooltip:Hide();
+                if GameTooltip:IsVisible() then
+                    GRM_UI.RestoreTooltipScale();
+                    GameTooltip:Hide();
+                end
             end
-
         end
     end);
 
@@ -1264,7 +1665,9 @@ GRMGI_UI.InitializeUIFrames = function()
 
             GRM_UI.SetTooltipScale()
             GameTooltip:SetOwner ( self , "ANCHOR_CURSOR" );
-            GameTooltip:AddLine( GRM.L ( "Click to Lock Info Window" ) );
+            GameTooltip:AddLine ( GRM.L ( "Click to Lock Info Window" ) );
+            GameTooltip:AddLine ( " " );
+            GameTooltip:AddLine ( GRM.L ( "|CFFE6CC7FCtrl-Left-Click|r and drag to move this button anywhere." ) );
             GameTooltip:Show();
 
         end
@@ -1302,36 +1705,34 @@ GRMGI_UI.InitializeUIFrames = function()
 
     end);
 
-    RaidFrame:HookScript ( "OnShow" , function()
-        GRM_GI.SetGroupInfoButtonPosition();
-    end);
+    GRMGI_UI.SetSavePosition = function( side1 , side2 , point1 , point2 )
 
-    RaidFrame:HookScript ( "OnHide" , function()
-        if not CompactRaidFrameManager:IsVisible() or not IsInGroup() then
-            GRM_GI.lock = false;
-            GRMGI_UI.GRM_GroupRulesButton:Hide();
-            GRMGI_UI.GRM_GroupButtonFrame:Hide();
-        else
-            if CompactRaidFrameManager:IsVisible() then
-                if not IsInRaid() and IsInGroup() and PartyMemberFrame1:IsVisible() then
-                    GRMGI_UI.GRM_GroupRulesButton:ClearAllPoints();
-                    GRMGI_UI.GRM_GroupRulesButton:SetPoint ( "BOTTOMRIGHT" , PartyMemberFrame1 , "TOPRIGHT" , -5 , 5 );
-                elseif IsInRaid() and CompactRaidFrameContainer:IsVisible() then
-                    GRMGI_UI.GRM_GroupRulesButton:ClearAllPoints();
-                    GRMGI_UI.GRM_GroupRulesButton:SetPoint ( "BOTTOMRIGHT" , CompactRaidFrameContainerBorderFrame , "TOPRIGHT" , -3 , 3 );
-                end
-            end
+        if not GRM_GroupInfo_Save[GRM_G.addonUser] then
+            GRM_GroupInfo_Save[GRM_G.addonUser] = {};
+        end
+
+        GRM_GroupInfo_Save[GRM_G.addonUser] = { side1 , side2 , point1 , point2 };
+    end
+
+    GRMGI_UI.GRM_GroupRulesButton:SetScript ( "OnDragStart" , function ( self )
+        if IsControlKeyDown() then
+            -- Draggable anywhere.
+            self:SetMovable ( true );
+            self:StartMoving();
+
+            GRM_UI.RestoreTooltipScale();
+            GameTooltip:Hide();
         end
     end);
-
-    CompactRaidFrameManager:HookScript ( "OnHide" , function()
-        GRM_GI.SetGroupInfoButtonPosition();
-    end);
-
-    CompactRaidFrameManager:HookScript ( "OnShow" , function()
-        GRM_GI.SetGroupInfoButtonPosition();
-    end);
-
+    
+    GRMGI_UI.GRM_GroupRulesButton:SetScript ( "OnDragStop" , function ( self )
+        self:StopMovingOrSizing();
+        
+        local side1, _ , side2 , point1 , point2 = GRMGI_UI.GRM_GroupRulesButton:GetPoint();
+        GRM_GI.CustomButtonPosition = { side1 , side2 , point1 , point2 };
+        GRMGI_UI.SetSavePosition ( side1 , side2 , point1 , point2 );
+        self:SetMovable ( false );
+    end)
 
     GRM_UI.GRM_MemberDetailMetaData.GRM_DayDropDownMenuSelected:SetScript ( "OnEnter" , function( self )
         if not GRM_UI.GRM_MemberDetailMetaData.GRM_DayDropDownMenu:IsVisible() then
@@ -1347,10 +1748,15 @@ GRMGI_UI.InitializeUIFrames = function()
         GameTooltip:Hide();
     end);
 
+    GRMGI_UI.GRM_GroupRulesButton:HookScript ( "OnLeave" , GRMGI_UI.GRM_GroupRulesButton:GetScript ( "OnMouseUp"  ) );
+
     if not GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.enabled then
         GRMGI_UI.GRM_GroupRulesButton:Hide();
     end
+
 end
+
+
 
 -- Method:          GRM_UI.InitializeLocalizations()
 -- What it Does:    Reprocesses all of the fontstrings of this module for localization and font changes
