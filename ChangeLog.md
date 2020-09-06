@@ -1,5 +1,10 @@
 
 
+**RELEASE Ver. 1.02**
+
+* Fixed a spacing issue where a certain line can overlap the end.
+
+
 **RELEASE Ver. 1.01**
 
 ***Bug Fixes***

@@ -364,6 +364,12 @@ end
 -- What it Does:    Reconfigures the width of the buttons and fontstrings
 -- Purpose:         To allow dynamic reshaping of the mouseover Group Info window.
 GRM_GI.ReconfigureWidths = function ( width )
+
+    -- Redundancy
+    if width < GRMGI_UI.GRM_GroupButtonFrame.TextFromServer:GetWidth() then
+        width = GRMGI_UI.GRM_GroupButtonFrame.TextFromServer:GetWidth() + 5;
+    end
+    
     if GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons ~= nil then
         for i = 1 , #GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons do
             GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i][1]:SetWidth ( width + 5 );
@@ -1928,9 +1934,11 @@ GRM_UI.LocalizeOptions = function()
 
     GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButtonText:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 12 );
     GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButtonText:SetText ( GRM.L ( "Enable Module" ) );
+    GRM.NormalizeHitRects ( GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButtonText );
 
     GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButtonText:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 12 );
     GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButtonText:SetText ( GRM.L ( "Show Interactable Distance Indicator" ) );
+    GRM.NormalizeHitRects ( GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButtonText );
 
     GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerText:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 12 );
     GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerText:SetText ( "|cffff0000<>|r " .. GRM.L ( "Choose Color:" ) );
