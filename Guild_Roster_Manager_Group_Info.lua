@@ -1844,6 +1844,7 @@ GRM_UI.LoadGroupInfoOptions = function()
 
         -- Options Proximity Trade Icon Color
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame = CreateFrame ( "Frame" , "GRM_ColorSelectOptionsFrame" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame );
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.Backdrop = CreateFrame( "Frame" , "GRM_GroupInfoColorPickerFrameBackdrop" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame , "BackdropTemplate" );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.GRM_GroupInfoOptionsTexture = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame:CreateTexture ( nil , "BACKGROUND" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.GRM_GroupInfoOptionsTexture:SetPoint ( "CENTER" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.GRM_GroupInfoOptionsTexture:SetSize ( 15 , 15 );
@@ -1853,16 +1854,17 @@ GRM_UI.LoadGroupInfoOptions = function()
         
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame:SetPoint ( "LEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerText , "RIGHT" , 5 , 0 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame:SetSize ( 18 , 18 );
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame:SetBackdrop (
-            {
-                bgFile = nil,
-                edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-                tile = true,
-                tileSize = 32,
-                edgeSize = 9,
-                insets = { left = -2 , right = -2 , top = -3 , bottom = -2 }
-            }
-        );
+
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.Backdrop:SetAllPoints()
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.Backdrop.backdropInfo = {
+            bgFile = nil,
+            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+            tile = true,
+            tileSize = 32,
+            edgeSize = 9,
+            insets = { left = -2 , right = -2 , top = -3 , bottom = -2 }
+        }
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.Backdrop:ApplyBackdrop()
 
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame:SetScript ( "OnMouseDown" , function ( _ , button )
             if button == "LeftButton" then
