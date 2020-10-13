@@ -1,7 +1,6 @@
 **RELEASE Ver. 1.03**
 * 9.0 Release compatibility!
 
-
 **RELEASE Ver. 1.02**
 
 * Fixed a spacing issue where a certain line can overlap the end.
