@@ -1,3 +1,7 @@
+**RELEASE Ver. 1.04**
+* The button will now save to 2 different zones, depending on if you are in a Raid, or a party(group). It makes sense to have a position for parties and a position for raids. It will auto swap the positioning if you go from a party to a raid and so on.
+
+
 **RELEASE Ver. 1.03**
 * 9.0 Release compatibility!
 

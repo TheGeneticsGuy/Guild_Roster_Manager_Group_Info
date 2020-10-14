@@ -901,6 +901,7 @@ GRM_GI.EventListener:SetScript ( "OnEvent" , function( _ , eventName )
             GRM_GI.GroupCheckRepeatControl ( 1 );
         end);
 
+        GRMGI_UI.GroupInfoButtonInit();
         GRM_GI.EventListener.timer = time();
     end
 
@@ -1556,17 +1557,38 @@ GRMGI_UI.GroupInfoButtonUpdatePos = function()
     GRMGI_UI.GRM_GroupRulesButton:SetPoint ( GRM_GI.CustomButtonPosition[1] , UIParent , GRM_GI.CustomButtonPosition[2] , GRM_GI.CustomButtonPosition[3] , GRM_GI.CustomButtonPosition[4] );
 end
 
+local updateAddonWithMultiplePositions = function()
+    GRM_GroupInfo_Save[GRM_G.addonUser].raid = {};
+    GRM_GroupInfo_Save[GRM_G.addonUser].party = {};
+
+    if #GRM_GroupInfo_Save[GRM_G.addonUser] > 0 then
+        for i = 1 , #GRM_GroupInfo_Save[GRM_G.addonUser] do
+            GRM_GroupInfo_Save[GRM_G.addonUser].raid[i] = GRM_GroupInfo_Save[GRM_G.addonUser][i];
+            GRM_GroupInfo_Save[GRM_G.addonUser].party[i] = GRM_GroupInfo_Save[GRM_G.addonUser][i];
+            GRM_GroupInfo_Save[GRM_G.addonUser][i] = nil;
+        end
+    end
+end
 
 -- Method:          GRMGI_UI.GroupInfoButtonInit()
 -- What it Does     Initializes the button position values for custom placement on UIParent
 -- Purpose:         Customizable and movable button
 GRMGI_UI.GroupInfoButtonInit = function()
-
     if not GRM_GroupInfo_Save[GRM_G.addonUser] then
-        GRM_GroupInfo_Save[GRM_G.addonUser] = { "CENTER" , "CENTER" , -200 , 0 };
+        GRM_GroupInfo_Save[GRM_G.addonUser] = {};
+        GRM_GroupInfo_Save[GRM_G.addonUser].party = { "CENTER" , "CENTER" , -200 , 0 };
+        GRM_GroupInfo_Save[GRM_G.addonUser].raid = { "CENTER" , "CENTER" , -200 , 0 };
+    end
+
+    if not GRM_GroupInfo_Save[GRM_G.addonUser].raid then
+        updateAddonWithMultiplePositions();
     end
     
-    GRM_GI.CustomButtonPosition = GRM_GroupInfo_Save[GRM_G.addonUser];
+    if IsInRaid() then
+        GRM_GI.CustomButtonPosition = GRM_GroupInfo_Save[GRM_G.addonUser].raid;
+    else
+        GRM_GI.CustomButtonPosition = GRM_GroupInfo_Save[GRM_G.addonUser].party;
+    end
     GRMGI_UI.GroupInfoButtonUpdatePos();
 
 end
@@ -1577,7 +1599,9 @@ end
 GRMGI_UI.ResetGroupInfoButtonToDefault = function()
     GRM_GI.CustomButtonPosition = nil;
     GRM_GI.CustomButtonPosition = {};
-    GRM_GroupInfo_Save[GRM_G.addonUser] = { "CENTER" , "CENTER" , -200 , 0 };
+    GRM_GroupInfo_Save[GRM_G.addonUser] = {};
+    GRM_GroupInfo_Save[GRM_G.addonUser].party = { "CENTER" , "CENTER" , -200 , 0 };
+    GRM_GroupInfo_Save[GRM_G.addonUser].raid = { "CENTER" , "CENTER" , -200 , 0 };
     GRMGI_UI.GroupInfoButtonInit();
 end
 
@@ -1717,7 +1741,11 @@ GRMGI_UI.InitializeUIFrames = function()
             GRM_GroupInfo_Save[GRM_G.addonUser] = {};
         end
 
-        GRM_GroupInfo_Save[GRM_G.addonUser] = { side1 , side2 , point1 , point2 };
+        if IsInRaid() then
+            GRM_GroupInfo_Save[GRM_G.addonUser].raid = { side1 , side2 , point1 , point2 };
+        elseif IsInGroup() then
+            GRM_GroupInfo_Save[GRM_G.addonUser].party = { side1 , side2 , point1 , point2 };
+        end
     end
 
     GRMGI_UI.GRM_GroupRulesButton:SetScript ( "OnDragStart" , function ( self )
