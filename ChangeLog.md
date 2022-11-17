@@ -1,4 +1,28 @@
+
+**RELEASE Ver. 1.11**
+
+* Compatibility for 10.0.2 and DRAGONFLIGHT released!
+
+**RELEASE Ver. 1.10**
+
+* Compatibility Release for 9.1 - update all codebases.
+
+**RELEASE Ver. 1.09**
+
+* Compatibility Release for WOW Classic TBC + WOW Classic Era, and creation of universal codebase for all versions of addon thanks to multi .toc capabilities now
+
+**RELEASE Ver. 1.08**
+
+* Compatibility Release for 9.0.5
+
+* Fixed a bug with the background template throwiing a Lua error on the colorpicker window.
+
+**RELEASE Ver. 1.06**
+
+* Compatibility release with pre-SL week 9.0.2 launch
+
 **RELEASE Ver. 1.04**
+
 * The button will now save to 2 different zones, depending on if you are in a Raid, or a party(group). It makes sense to have a position for parties and a position for raids. It will auto swap the positioning if you go from a party to a raid and so on.
 
 

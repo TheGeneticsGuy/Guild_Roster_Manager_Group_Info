@@ -171,7 +171,7 @@ GRM_GI.IsPlayerFormerMemberByGUID = function ( guid )
             if type ( player ) == "table" then
                 if player.GUID ~= "" and player.GUID == guid then
                     result = true;
-                    playerInfo = { player.bannedInfo[1] , player.bannedInfo[2] , player.reasonBanned , player.name , player.alts , player.isMain , GRM.EpochToDateFormat( player.leftGuildEpoch[#player.leftGuildEpoch] ) }; -- [1] = isBanned = true/false ; [2] = dateBannedEpoch
+                    playerInfo = { player.bannedInfo[1] , player.bannedInfo[2] , player.reasonBanned , player.name , player.alts , player.isMain , GRM.FormatTimeStamp ( { player.joinDateHist[1][1] , player.joinDateHist[1][2] , player.joinDateHist[1][3] } ) }; -- [1] = isBanned = true/false ; [2] = dateBannedEpoch
                     break;
                 end
             end
@@ -263,7 +263,7 @@ GRM_GI.UpdateGroupInfo = function( forcedFullRefresh )
             elseif formerMemberData[ player ] ~= nil then
                 GRM_G.GroupInfo[ player ].isGuildie = false;
                 GRM_G.GroupInfo[ player ].isFormerGuildie = true;
-                GRM_G.GroupInfo[ player ].dateLeft = GRM.EpochToDateFormat( formerMemberData[ player ].leftGuildEpoch[#formerMemberData[ player ].leftGuildEpoch] );
+                GRM_G.GroupInfo[ player ].dateLeft = GRM.FormatTimeStamp ( { formerMemberData[ player ].joinDateHist[1][1] , formerMemberData[ player ].joinDateHist[1][2] , formerMemberData[ player ].joinDateHist[1][3] } )
                 GRM_G.GroupInfo[ player ].isBanned = { formerMemberData[ player ].bannedInfo[1] , formerMemberData[ player ].bannedInfo[2] , formerMemberData[ player ].reasonBanned , "" };
                 GRM_G.GroupInfo[ player ].alts = GRM_GI.GetAltNames ( formerMemberData[ player ].alts );
                 GRM_G.GroupInfo[ player ].isMain = formerMemberData[ player ].isMain;
@@ -511,9 +511,11 @@ GRM_GI.BuildGroupButtonFrame = function()
         -- Build the guildie frames.
         if not GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i] then
             local tempButton = CreateFrame ( "Button" , "GRM_GroupInfoButton" .. i , GRMGI_UI.GRM_GroupButtonFrame );
-            tempButton.tradeDistanceIconBorder = tempButton:CreateTexture ( "tradeDistanceIconBorder" , "OVERLAY" );
-            tempButton.tradeDistanceIcon = tempButton:CreateTexture ( "tradeDistanceIcon" , "ARTWORK" );
-            GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i] = { tempButton , tempButton:CreateFontString ( "GRM_GroupInfoButtonText1_" .. i , "OVERLAY" , "GameFontWhiteTiny" ) , tempButton.tradeDistanceIcon , tempButton.tradeDistanceIconBorder };
+
+            GRM.CreateTexture ( tempButton , "tradeDistanceIconBorder" , "OVERLAY" , true );
+            GRM.CreateTexture ( tempButton , "tradeDistanceIcon" , "ARTWORK" , true );
+
+            GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i] = { tempButton , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) , tempButton.tradeDistanceIcon , tempButton.tradeDistanceIconBorder };
 
             GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i][1]:SetSize ( minWidth , 15 );
             GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i][1]:SetHighlightTexture ( "Interface\\Buttons\\UI-Panel-Button-Highlight" );
@@ -589,9 +591,9 @@ GRM_GI.BuildGroupButtonFrame = function()
         -- Build the guildie frames.
         if not GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[j] then
             local tempButton = CreateFrame ( "Button" , "GRM_GroupInfoFormerMemberButton" .. j , GRMGI_UI.GRM_GroupButtonFrame );
-            tempButton.tradeDistanceIcon = tempButton:CreateTexture ( "tradeDistanceIcon" , "ARTWORK" );
-            tempButton.tradeDistanceIconBorder = tempButton:CreateTexture ( "tradeDistanceIconBorder" , "OVERLAY" );
-            GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[j] = { tempButton , tempButton:CreateFontString ( "GRM_GroupInfoFormerMemberButtonText1_" .. j , "OVERLAY" , "GameFontWhiteTiny" ) , tempButton:CreateFontString ( "GRM_GroupInfoFormerMemberButtonDateText" .. j , "OVERLAY" , "GameFontWhiteTiny" ) , tempButton.tradeDistanceIcon , tempButton.tradeDistanceIconBorder };
+            GRM.CreateTexture ( tempButton , "tradeDistanceIcon" , "ARTWORK" , true );
+            GRM.CreateTexture ( tempButton , "tradeDistanceIconBorder" , "OVERLAY" , true );
+            GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[j] = { tempButton , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) , tempButton.tradeDistanceIcon , tempButton.tradeDistanceIconBorder };
 
             GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[j][1]:SetSize ( minWidth , 15 );
             GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[j][1]:SetHighlightTexture ( "Interface\\Buttons\\UI-Panel-Button-Highlight" );
@@ -675,9 +677,9 @@ GRM_GI.BuildGroupButtonFrame = function()
             -- Build the guildie frames.
             if not GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x] then
                 local tempButton = CreateFrame ( "Button" , "GRM_GroupInfoFormerMemberButton" .. x , GRMGI_UI.GRM_GroupButtonFrame );
-                tempButton.tradeDistanceIcon = tempButton:CreateTexture ( "tradeDistanceIcon" , "ARTWORK" );
-                tempButton.tradeDistanceIconBorder = tempButton:CreateTexture ( "tradeDistanceIconBorder" , "OVERLAY" );
-                GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x] = { tempButton , tempButton:CreateFontString ( "GRM_GroupInfoRealmMembersButton_" .. x , "OVERLAY" , "GameFontWhiteTiny" ) , tempButton:CreateFontString ( "GRM_GroupInfoRealmMembersButtonText_" .. x , "OVERLAY" , "GameFontWhiteTiny" ) };
+                GRM.CreateTexture ( tempButton , "tradeDistanceIcon" , "ARTWORK" , true );
+                GRM.CreateTexture ( tempButton , "tradeDistanceIconBorder" , "OVERLAY" , true );
+                GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x] = { tempButton , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) };
         
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetSize ( minWidth , 15 );
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetHighlightTexture ( "Interface\\Buttons\\UI-Panel-Button-Highlight" );
@@ -776,7 +778,7 @@ GRM_GI.BuildMemberTooltip = function ( button , ind )
     end
     GameTooltip:AddLine ( " " );
 
-    GameTooltip:AddLine ( GRM.L ( "|CFFE6CC7FCtrl-Click|r to open Player Window" ) );
+    GameTooltip:AddLine ( GRM.L ( "{custom1} to open Player Window" , nil , nil , nil , "|CFFE6CC7F" .. GRM.L ( "Ctrl-Click" ) .. "|r" ) );
     GameTooltip:AddLine ( GRM.L ( "|CFFE6CC7FCtrl-Shift-Click|r to Search the Log for Player" ) );
 
     GameTooltip:Show();
@@ -976,15 +978,15 @@ GRM_GI.HideAllIcons = function()
     for i = 1 , #buttons do
         if i < 4 then
             for j = 1 , #buttons[i] do
-                buttons[i][j][1].tradeDistanceIconBorder:Hide();
-                buttons[i][j][1].tradeDistanceIcon:Hide();
+                buttons[i][j][1]["raidTradeDistanceIconBorder" .. j]:Hide();
+                buttons[i][j][1]["raidTradeDistanceIcon" .. j]:Hide();
             end
         else
             for j = 1 , #buttons[i] do
                 for k = 1 , #buttons[i][j] do
                     if buttons[i][j][k] ~= false then
-                        buttons[i][j][k][1].tradeDistanceIconBorder:Hide();
-                        buttons[i][j][k][1].tradeDistanceIcon:Hide();
+                        buttons[i][j][k][1]["raidTradeDistanceIconBorder" .. j .. "_" .. k]:Hide();
+                        buttons[i][j][k][1]["raidTradeDistanceIcon" .. j .. "_" .. k]:Hide();
                     end
                 end
             end
@@ -993,10 +995,10 @@ GRM_GI.HideAllIcons = function()
 end
 
 -- MISC UI BUILDING
--- Method:          GRM_GI.ConfigureRaidAndPartyIcons ( Object/Button , bool , int )
+-- Method:          GRM_GI.ConfigureRaidAndPartyIcons ( Object/Button , bool , texture , int )
 -- What it Does:    Sets the texture and dimensions and position of the icon on each of the buttons
 -- Purpose:         Useful texture indictator if someone is within inspection distance of you
-GRM_GI.ConfigureRaidAndPartyIcons = function ( button , tag , frameIndex )
+GRM_GI.ConfigureRaidAndPartyIcons = function ( button , tag , tradeDistanceIconBorder , tradeDistanceIcon , frameIndex )
     local wBorder = 15;
     local hBorder = -3.5;
     local anchor1 = "RIGHT";
@@ -1049,7 +1051,7 @@ GRM_GI.ConfigureRaidAndPartyIcons = function ( button , tag , frameIndex )
                     hBorder = -5;
                     anchor1 = "LEFT";
                     anchor2 = "RIGHT";
-                    button.tradeDistanceIconBorder:SetPoint ( anchor1 , button , anchor2 , wBorder , hBorder );
+                    tradeDistanceIconBorder:SetPoint ( anchor1 , button , anchor2 , wBorder , hBorder );
                 elseif frameIndex == 2 then
                     wBorder = 0;
                     hBorder = 0;
@@ -1057,7 +1059,7 @@ GRM_GI.ConfigureRaidAndPartyIcons = function ( button , tag , frameIndex )
                     anchor2 = "TOPLEFT";
                     button.hiddenFrame:SetPoint ( anchor1 , button.highFrame , anchor2 , wBorder , hBorder );
                     button.hiddenFrame:SetSize ( 12 , 12 );
-                    button.tradeDistanceIconBorder:SetPoint ( "CENTER" , button.hiddenFrame );
+                    tradeDistanceIconBorder:SetPoint ( "CENTER" , button.hiddenFrame );
                 end
             else
                 wBorder = 5;
@@ -1066,7 +1068,7 @@ GRM_GI.ConfigureRaidAndPartyIcons = function ( button , tag , frameIndex )
                 anchor2 = "BOTTOMRIGHT";
                 button.hiddenFrame:SetPoint ( anchor1 , button , anchor2 , wBorder , hBorder );
                 button.hiddenFrame:SetSize ( 12 , 12 );
-                button.tradeDistanceIconBorder:SetPoint ( "CENTER" , button.hiddenFrame );
+                tradeDistanceIconBorder:SetPoint ( "CENTER" , button.hiddenFrame );
             end
 
             textureSize = { 14 , 4 };
@@ -1084,7 +1086,7 @@ GRM_GI.ConfigureRaidAndPartyIcons = function ( button , tag , frameIndex )
             anchor2 = "TOPRIGHT";
             button.hiddenFrame:SetPoint ( anchor1 , button , anchor2 , wBorder , hBorder );
             button.hiddenFrame:SetSize ( 12 , 12 );
-            button.tradeDistanceIconBorder:SetPoint ( "CENTER" , button.hiddenFrame );
+            tradeDistanceIconBorder:SetPoint ( "CENTER" , button.hiddenFrame );
             textureSize = { 16 , 5 };
 
         elseif GRM_GI.UIAddonCompatibilityName == "LunaUnitFrames" then
@@ -1093,7 +1095,7 @@ GRM_GI.ConfigureRaidAndPartyIcons = function ( button , tag , frameIndex )
                 hBorder = -3;
                 anchor1 = "TOPLEFT";
                 anchor2 = "TOPRIGHT";
-                button.tradeDistanceIconBorder:SetPoint ( anchor1 , button , anchor2 , wBorder , hBorder ); 
+                tradeDistanceIconBorder:SetPoint ( anchor1 , button , anchor2 , wBorder , hBorder ); 
             elseif frameIndex == 2 then
                 wBorder = 2;
                 hBorder = -2;
@@ -1102,25 +1104,25 @@ GRM_GI.ConfigureRaidAndPartyIcons = function ( button , tag , frameIndex )
                 textureSize = { 14 , 4 };
                 button.hiddenFrame:SetPoint ( anchor1 , button.highFrame , anchor2 , wBorder , hBorder );
                 button.hiddenFrame:SetSize ( 12 , 12 );
-                button.tradeDistanceIconBorder:SetPoint ( "CENTER" , button.hiddenFrame );
+                tradeDistanceIconBorder:SetPoint ( "CENTER" , button.hiddenFrame );
             end
         end
         
     end
     
     if tag ~= "custom" or ( tag == "custom" and ( GRM_GI.UIAddonCompatibilityName == "ZPerl_RaidFrames" or GRM_GI.UIAddonCompatibilityName == "SpartanUI" ) ) then
-        button.tradeDistanceIconBorder:SetPoint ( anchor1 , button , anchor2 , wBorder , hBorder );        
+        tradeDistanceIconBorder:SetPoint ( anchor1 , button , anchor2 , wBorder , hBorder );        
     end
 
-    button.tradeDistanceIconBorder:SetTexture ( "Interface\\Minimap\\MiniMap-TrackingBorder" );
-    button.tradeDistanceIconBorder:SetSize ( textureSize[1] , textureSize[1] );
+    tradeDistanceIconBorder:SetTexture ( "Interface\\Minimap\\MiniMap-TrackingBorder" );
+    tradeDistanceIconBorder:SetSize ( textureSize[1] , textureSize[1] );
 
-    button.tradeDistanceIcon:SetPoint ( "CENTER" , button.tradeDistanceIconBorder , -4 , 3.5 );
-    button.tradeDistanceIcon:SetColorTexture ( color[1] , color[2] , color[3] );
-    button.tradeDistanceIcon:SetSize ( textureSize[2] , textureSize[2] );
+    tradeDistanceIcon:SetPoint ( "CENTER" , tradeDistanceIconBorder , -4 , 3.5 );
+    tradeDistanceIcon:SetColorTexture ( color[1] , color[2] , color[3] );
+    tradeDistanceIcon:SetSize ( textureSize[2] , textureSize[2] );
 
-    button.tradeDistanceIconBorder:Hide();
-    button.tradeDistanceIcon:Hide();
+    tradeDistanceIconBorder:Hide();
+    tradeDistanceIcon:Hide();
 end
 
 -- Method:          GRM_GI.EstablishGroupIcons()
@@ -1134,11 +1136,11 @@ GRM_GI.EstablishGroupIcons = function()
                 for i = 1 , 40 do
                     button = _G["RaidGroupButton" .. i];
                     if button ~= nil then
-                        button.tradeDistanceIconBorder = button:CreateTexture ( "raidTradeDistanceIconBorder" .. i , "OVERLAY" );
-                        button.tradeDistanceIcon = button:CreateTexture ( "raidTradeDistanceIcon" .. i , "ARTWORK" );
-                        GRM_GI.raidIcons[i] = { button , button.tradeDistanceIconBorder , button.tradeDistanceIcon };
+                        GRM.CreateTexture ( button , "raidTradeDistanceIcon" .. i , "ARTWORK" , true );
+                        GRM.CreateTexture ( button , "raidTradeDistanceIconBorder" .. i , "OVERLAY" , true );
+                        GRM_GI.raidIcons[i] = { button , button["raidTradeDistanceIconBorder"..i] , button["raidTradeDistanceIcon"..i] };
 
-                        GRM_GI.ConfigureRaidAndPartyIcons ( button , "raid" );
+                        GRM_GI.ConfigureRaidAndPartyIcons ( button , "raid" , button["raidTradeDistanceIconBorder" .. i] , button["raidTradeDistanceIcon" .. i] );
                     else
                         break;
                     end
@@ -1151,11 +1153,11 @@ GRM_GI.EstablishGroupIcons = function()
                     if not GRM_GI.compactRaidIcons[i] then
                         button = _G["CompactRaidFrame" .. i];
                         if button ~= nil then
-                            button.tradeDistanceIconBorder = button:CreateTexture ( "raidTradeDistanceIconBorder" .. i , "OVERLAY" );
-                            button.tradeDistanceIcon = button:CreateTexture ( "raidTradeDistanceIcon" .. i , "ARTWORK" );
-                            GRM_GI.compactRaidIcons[i] = { button , button.tradeDistanceIconBorder , button.tradeDistanceIcon };
+                            GRM.CreateTexture ( button , "raidTradeDistanceIcon" .. i , "ARTWORK" , true );
+                            GRM.CreateTexture ( button , "raidTradeDistanceIconBorder" .. i , "OVERLAY" , true );
+                            GRM_GI.compactRaidIcons[i] = { button , button["raidTradeDistanceIconBorder"..i] , button["raidTradeDistanceIcon"..i] };
 
-                            GRM_GI.ConfigureRaidAndPartyIcons ( button , "micro" );
+                            GRM_GI.ConfigureRaidAndPartyIcons ( button , "micro" , button["raidTradeDistanceIconBorder" .. i] , button["raidTradeDistanceIcon" .. i] );
                         else
                             break;
                         end
@@ -1168,11 +1170,11 @@ GRM_GI.EstablishGroupIcons = function()
                 for i = 1 , 4 do
                     button = _G["PartyMemberFrame" .. i];
                     if button ~= nil then
-                        button.tradeDistanceIconBorder = button:CreateTexture ( "raidTradeDistanceIconBorder" .. i , "OVERLAY" );
-                        button.tradeDistanceIcon  = button:CreateTexture ( "raidTradeDistanceIcon" .. i , "ARTWORK" );
-                        GRM_GI.partyIcons[i] = { button , button.tradeDistanceIconBorder , button.tradeDistanceIcon };
+                        GRM.CreateTexture ( button , "raidTradeDistanceIcon" .. i , "ARTWORK" , true );
+                        GRM.CreateTexture ( button , "raidTradeDistanceIconBorder" .. i , "OVERLAY" , true );
+                        GRM_GI.partyIcons[i] = { button , button["raidTradeDistanceIconBorder"..i] , button["raidTradeDistanceIcon" .. i] };
 
-                        GRM_GI.ConfigureRaidAndPartyIcons ( button , "party" );
+                        GRM_GI.ConfigureRaidAndPartyIcons ( button , "party" , button["raidTradeDistanceIconBorder" .. i] , button["raidTradeDistanceIcon" .. i] );
                     else
                         break;
                     end
@@ -1218,18 +1220,19 @@ GRM_GI.EstablishGroupIcons = function()
                                     button.hiddenFrame = CreateFrame ( "Frame" , "GRM_HiddenTexture" .. i .. "_" .. j , button );
 
                                 end
-
+                                GRM.CreateTexture ( button , "raidTradeDistanceIcon" .. i .. "_" .. j , layer2 , true );
+                                GRM.CreateTexture ( button , "raidTradeDistanceIconBorder" .. i .. "_" .. j , layer , true );
                                 button.tradeDistanceIconBorder = button.hiddenFrame:CreateTexture ( "raidTradeDistanceIconBorder" .. i .. "_" .. j , layer , nil , 1 );
                                 button.tradeDistanceIcon = button.hiddenFrame:CreateTexture ( "raidTradeDistanceIcon" .. i .. "_" .. j , layer ) , nil , 1 ;
-                                GRM_GI.customFrameIcons[i][j] = { button , button.tradeDistanceIconBorder , button.tradeDistanceIcon };
+                                GRM_GI.customFrameIcons[i][j] = { button , button["raidTradeDistanceIconBorder" .. i .. "_" .. j] , button["raidTradeDistanceIcon" .. i .. "_" .. j] };
 
                             else
-                                button.tradeDistanceIconBorder = button:CreateTexture ( "raidTradeDistanceIconBorder" .. i .. "_" .. j , layer , nil , 1 );
-                                button.tradeDistanceIcon = button:CreateTexture ( "raidTradeDistanceIcon" .. i .. "_" .. j , layer2 ) , nil , 1 ;
-                                GRM_GI.customFrameIcons[i][j] = { button , button.tradeDistanceIconBorder , button.tradeDistanceIcon };
+                                GRM.CreateTexture ( button , "raidTradeDistanceIcon" .. i .. "_" .. j , layer2 , true );
+                                GRM.CreateTexture ( button , "raidTradeDistanceIconBorder" .. i .. "_" .. j , layer , true );
+                                GRM_GI.customFrameIcons[i][j] = { button , button["raidTradeDistanceIconBorder" .. i .. "_" .. j] , button["raidTradeDistanceIcon" .. i .. "_" .. j] };
                             end
 
-                            GRM_GI.ConfigureRaidAndPartyIcons ( button , "custom" , i );
+                            GRM_GI.ConfigureRaidAndPartyIcons ( button , "custom" , button["raidTradeDistanceIconBorder" .. i] , button["raidTradeDistanceIcon" .. i] , i );
                         elseif i == 2 then
                             GRM_GI.customFrameIcons[i][j] = false;
                         end
@@ -1345,7 +1348,7 @@ GRM_GI.RefreshRaidInteractIconVisibility = function()
                 if GRM_GI.customFrameIcons[i][j] ~= false then
                     nameTest = GRM_GI.GetCustomAddonUnitName ( GRM_GI.customFrameIcons[i][j][1] );
                     if nameTest ~= nil and nameTest ~= UnitName ( "PLAYER" ) then
-                        name = GRM.AppendSameServerName ( nameTest );
+                        name = GRM.AppendServerName ( nameTest );
                         if GRM_G.GroupInfo[name] ~= nil and GRM_G.GroupInfo[name].canTrade then
                             GRM_GI.customFrameIcons[i][j][2]:Show();
                             GRM_GI.customFrameIcons[i][j][3]:Show();
@@ -1373,7 +1376,7 @@ GRM_GI.RefreshRaidInteractIconVisibility = function()
         if RaidFrame:IsVisible() then
             for i = 1 , #GRM_GI.raidIcons do
                 if GRM_GI.raidIcons[i][1].name ~= nil and GRM_GI.raidIcons[i][1].name ~= UnitName ( "PLAYER" ) then
-                    name = GRM.AppendSameServerName ( GRM_GI.raidIcons[i][1].name );
+                    name = GRM.AppendServerName ( GRM_GI.raidIcons[i][1].name );
 
                     if GRM_G.GroupInfo[name] ~= nil and GRM_G.GroupInfo[name].canTrade then
                         GRM_GI.raidIcons[i][2]:Show();
@@ -1400,7 +1403,7 @@ GRM_GI.RefreshRaidInteractIconVisibility = function()
                 nameTest = nil;
             end
             if nameTest ~= nil and nameTest ~= UnitName ( "PLAYER" ) then
-                name = GRM.AppendSameServerName ( nameTest );
+                name = GRM.AppendServerName ( nameTest );
         
                 if GRM_G.GroupInfo[name] ~= nil and GRM_G.GroupInfo[name].canTrade then
                     GRM_GI.compactRaidIcons[i][2]:Show();
@@ -1430,7 +1433,7 @@ GRM_GI.RefreshRaidInteractIconVisibility = function()
                 nameTest = nil;
             end
             if nameTest ~= nil and nameTest ~= UnitName ( "PLAYER" ) then
-                name = GRM.AppendSameServerName ( nameTest );
+                name = GRM.AppendServerName ( nameTest );
         
                 if GRM_G.GroupInfo[name] ~= nil and GRM_G.GroupInfo[name].canTrade then
                     GRM_GI.partyIcons[i][2]:Show();
@@ -1518,7 +1521,7 @@ end
 
 GRMGI_UI.GRM_GroupRulesButton = CreateFrame( "Button" , "GRM_GroupRulesButton" , UIParent , "UIPanelButtonTemplate" );
 GRMGI_UI.GRM_GroupRulesButton:Hide();
-GRMGI_UI.GRM_GroupRulesButton.Text = GRMGI_UI.GRM_GroupRulesButton:CreateFontString ( "GRM_GroupRulesButtonText" , "OVERLAY" , "GameFontNormal" );
+GRMGI_UI.GRM_GroupRulesButton.Text = GRMGI_UI.GRM_GroupRulesButton:CreateFontString ( nil , "OVERLAY" , "GameFontNormal" );
 
 GRMGI_UI.GRM_GroupButtonFrame = CreateFrame ( "Frame" , "GRM_GroupButtonFrame" , GRMGI_UI.GRM_GroupRulesButton , "TranslucentFrameTemplate" );
 GRMGI_UI.GRM_GroupButtonFrame.GRM_GroupButtonFrameCloseButton = CreateFrame( "Button" , "GRM_GroupButtonFrameCloseButton" , GRMGI_UI.GRM_GroupButtonFrame , "UIPanelCloseButton");
@@ -1526,14 +1529,14 @@ GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons = {};
 GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons = {};
 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons = {};
 
-GRMGI_UI.GRM_GroupButtonFrame.TextTitle = GRMGI_UI.GRM_GroupButtonFrame:CreateFontString ( "GRM_GroupButtonFrameTextTitle" , "OVERLAY" , "GameFontWhiteTiny" );
-GRMGI_UI.GRM_GroupButtonFrame.TextTotal = GRMGI_UI.GRM_GroupButtonFrame:CreateFontString ( "GRM_GroupButtonFrameTextTotal" , "OVERLAY" , "GameFontNormal" );
-GRMGI_UI.GRM_GroupButtonFrame.TextMembers = GRMGI_UI.GRM_GroupButtonFrame:CreateFontString ( "GRM_GroupButtonFrameTextMembers" , "OVERLAY" , "GameFontNormal" );
-GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembers = GRMGI_UI.GRM_GroupButtonFrame:CreateFontString ( "GRM_GroupButtonFrameTextFormerMembers" , "OVERLAY" , "GameFontNormal" );
-GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembersDateLeft = GRMGI_UI.GRM_GroupButtonFrame:CreateFontString ( "TextFormerMembersDateLeft" , "OVERLAY" , "GameFontNormal" );
-GRMGI_UI.GRM_GroupButtonFrame.TextFromServer = GRMGI_UI.GRM_GroupButtonFrame:CreateFontString ( "GRM_GroupButtonFrameTextFromServer" , "OVERLAY" , "GameFontNormal" );
+GRMGI_UI.GRM_GroupButtonFrame.TextTitle = GRMGI_UI.GRM_GroupButtonFrame:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" );
+GRMGI_UI.GRM_GroupButtonFrame.TextTotal = GRMGI_UI.GRM_GroupButtonFrame:CreateFontString ( nil , "OVERLAY" , "GameFontNormal" );
+GRMGI_UI.GRM_GroupButtonFrame.TextMembers = GRMGI_UI.GRM_GroupButtonFrame:CreateFontString ( nil , "OVERLAY" , "GameFontNormal" );
+GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembers = GRMGI_UI.GRM_GroupButtonFrame:CreateFontString ( nil , "OVERLAY" , "GameFontNormal" );
+GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembersDateLeft = GRMGI_UI.GRM_GroupButtonFrame:CreateFontString ( nil , "OVERLAY" , "GameFontNormal" );
+GRMGI_UI.GRM_GroupButtonFrame.TextFromServer = GRMGI_UI.GRM_GroupButtonFrame:CreateFontString ( nil , "OVERLAY" , "GameFontNormal" );
 
-GRMGI_UI.GRM_GroupButtonFrame.GroupFrameFontStringTest = GRMGI_UI.GRM_GroupButtonFrame:CreateFontString ( "GroupFrameFontStringTest" , "OVERLAY" , "GameFontWhiteTiny" );
+GRMGI_UI.GRM_GroupButtonFrame.GroupFrameFontStringTest = GRMGI_UI.GRM_GroupButtonFrame:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" );
 
 -- Method:          GRMGI_UI.EstablishAddonCompatibility()
 -- What it Does:    Identifies which UI addon the player is using, if any.
@@ -1827,13 +1830,13 @@ end
 GRM_UI.LoadGroupInfoOptions = function()
     if not GRM_GI.optionsLoaded then
         -- Options Module Header
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.Header = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame:CreateFontString ( "GRM_ModulesFrame" , "OVERLAY" , "GameFontNormal" );
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.Header = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame:CreateFontString ( nil , "OVERLAY" , "GameFontNormal" );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.Header:SetPoint ( "TOPLEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame , 18 , - 12 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.Header:SetTextColor ( 0.0 , 0.8 , 1.0 , 1.0 );
         
         -- Options Enable/Disable Checkbox
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton = CreateFrame ( "CheckButton" , "GRM_EnableGIModuleCheckButton" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame , "OptionsSmallCheckButtonTemplate" );
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButtonText = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton:CreateFontString ( "GRM_EnableGIModuleCheckButtonText" , "OVERLAY" , "GameFontNormalSmall" );
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton = CreateFrame ( "CheckButton" , "GRM_EnableGIModuleCheckButton" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame , GRM_G.CheckButtonTemplate );
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButtonText = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton:CreateFontString ( nil , "OVERLAY" , "GameFontNormalSmall" );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton:SetPoint ( "TOPLEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.Header , "BOTTOMLEFT" , -4 , -4 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButtonText:SetPoint ( "LEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton , "RIGHT" , 1 , 0 );
         
@@ -1851,10 +1854,9 @@ GRM_UI.LoadGroupInfoOptions = function()
             end
         end);
 
-
         -- Options Proximity Trade Enabled/Disable Checkbox
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton = CreateFrame ( "CheckButton" , "GRM_ProximityCheckButton" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame , "OptionsSmallCheckButtonTemplate" );
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButtonText = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton:CreateFontString ( "GRM_ProximityCheckButtonText" , "OVERLAY" , "GameFontNormalSmall" );
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton = CreateFrame ( "CheckButton" , "GRM_ProximityCheckButton" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame , GRM_G.CheckButtonTemplate );
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButtonText = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton:CreateFontString ( nil , "OVERLAY" , "GameFontNormalSmall" );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton:SetPoint ( "TOPLEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton , "BOTTOMLEFT" , 0 , -6 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButtonText:SetPoint ( "LEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton , "RIGHT" , 1 , 0 );
         
@@ -1871,28 +1873,25 @@ GRM_UI.LoadGroupInfoOptions = function()
         end);
 
         -- Options Proximity Trade Icon Color
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame = CreateFrame ( "Frame" , "GRM_ColorSelectOptionsFrame" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame );
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.Backdrop = CreateFrame( "Frame" , "GRM_GroupInfoColorPickerFrameBackdrop" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame , "BackdropTemplate" );
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.GRM_GroupInfoOptionsTexture = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame:CreateTexture ( nil , "BACKGROUND" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame );
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame = CreateFrame ( "Frame" , "GRM_ColorSelectOptionsFrame" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame , BackdropTemplateMixin and "BackdropTemplate" );
+        GRM.CreateTexture ( GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame , "GRM_GroupInfoOptionsTexture" , "BACKGROUND" , true );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.GRM_GroupInfoOptionsTexture:SetPoint ( "CENTER" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.GRM_GroupInfoOptionsTexture:SetSize ( 15 , 15 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.GRM_GroupInfoOptionsTexture:SetColorTexture ( GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[1] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[2] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[3] , 1.0 );
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerText = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame:CreateFontString ( "GRM_GroupInfoColorPickerText" , "OVERLAY" , "GameFontNormalSmall" );
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerText = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame:CreateFontString ( nil , "OVERLAY" , "GameFontNormalSmall" );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerText:SetPoint ( "LEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButtonText , "RIGHT" , 18 , 0 );
         
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame:SetPoint ( "LEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerText , "RIGHT" , 5 , 0 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame:SetSize ( 18 , 18 );
 
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.Backdrop:SetAllPoints()
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.Backdrop.backdropInfo = {
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame:SetBackdrop ( {
             bgFile = nil,
             edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
             tile = true,
             tileSize = 32,
             edgeSize = 9,
             insets = { left = -2 , right = -2 , top = -3 , bottom = -2 }
-        }
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.Backdrop:ApplyBackdrop()
+        } );
 
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame:SetScript ( "OnMouseDown" , function ( _ , button )
             if button == "LeftButton" then
