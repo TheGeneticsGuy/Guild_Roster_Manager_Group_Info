@@ -1232,7 +1232,7 @@ GRM_GI.EstablishGroupIcons = function()
                                 GRM_GI.customFrameIcons[i][j] = { button , button["raidTradeDistanceIconBorder" .. i .. "_" .. j] , button["raidTradeDistanceIcon" .. i .. "_" .. j] };
                             end
 
-                            GRM_GI.ConfigureRaidAndPartyIcons ( button , "custom" , button["raidTradeDistanceIconBorder" .. i] , button["raidTradeDistanceIcon" .. i] , i );
+                            GRM_GI.ConfigureRaidAndPartyIcons ( button , "custom" , button["raidTradeDistanceIconBorder" .. i .. "_" .. j] , button["raidTradeDistanceIcon" .. i .. "_" .. j] , i );
                         elseif i == 2 then
                             GRM_GI.customFrameIcons[i][j] = false;
                         end
