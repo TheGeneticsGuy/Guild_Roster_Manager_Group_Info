@@ -1,7 +1,8 @@
 
-**RELEASE Ver. 1.12**
 
-* Fixed a Lua error that would occur when joining some group types. The distance icon would not show properly as a result.
+**RELEASE Ver. 1.13**
+
+* Compatibility for 3.4.1 Wrath Classic
 
 **RELEASE Ver. 1.11**
 
