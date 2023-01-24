@@ -1,5 +1,9 @@
 
 
+**RELEASE Ver. 1.14**
+
+* Compatibility for 10.0.5 Retail
+
 **RELEASE Ver. 1.13**
 
 * Compatibility for 3.4.1 Wrath Classic
