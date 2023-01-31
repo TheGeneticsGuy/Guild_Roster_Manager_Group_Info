@@ -1,4 +1,15 @@
 
+**RELEASE Ver. 1.15**
+
+* Fixed an issue where a lua error would occur preventing addon module from loading if using a custom UI, like ElvUI or Shadowed Frames, etc...
+
+* Added an option to easily disable the mouseover tooltip so you will ONLY see the popout window.
+
+* Added compatibility to the new raid frames in Dragonflight.
+
+**RELEASE Ver. 1.14**
+
+* Compatibility for 10.0.5 Retail
 
 **RELEASE Ver. 1.13**
 

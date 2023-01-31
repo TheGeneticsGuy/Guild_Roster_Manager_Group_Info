@@ -19,6 +19,7 @@ GRMGI_UI = {};                -- Module UI table
 GRM_GI.lock = false;
 GRM_GI.raidIcons = {};
 GRM_GI.compactRaidIcons = {};
+GRM_GI.compactRaidGroupIcons = {};
 GRM_GI.partyIcons = {};
 GRM_GI.customFrameIcons = {};       -- For addon compatibility
 GRM_GI.optionsLoaded = false;
@@ -973,10 +974,10 @@ end
 -- What it Does:    It hides all the icons
 -- Purpose:         Useful to hide them all if a player leaves group or leaves guild
 GRM_GI.HideAllIcons = function()
-    local buttons = { GRM_GI.raidIcons , GRM_GI.compactRaidIcons , GRM_GI.partyIcons , GRM_GI.customFrameIcons };
+    local buttons = { GRM_GI.raidIcons , GRM_GI.compactRaidIcons , GRM_GI.compactRaidGroupIcons , GRM_GI.partyIcons , GRM_GI.customFrameIcons };
 
     for i = 1 , #buttons do
-        if i < 4 then
+        if i < 5 then
             for j = 1 , #buttons[i] do
                 buttons[i][j][1]["raidTradeDistanceIconBorder" .. j]:Hide();
                 buttons[i][j][1]["raidTradeDistanceIcon" .. j]:Hide();
@@ -1132,7 +1133,7 @@ GRM_GI.EstablishGroupIcons = function()
 
     if IsInGroup() then
         if IsInRaid() then
-            if #GRM_GI.raidIcons < 40 then
+            if #GRM_GI.raidIcons <= 40 then
                 for i = 1 , 40 do
                     button = _G["RaidGroupButton" .. i];
                     if button ~= nil then
@@ -1148,7 +1149,7 @@ GRM_GI.EstablishGroupIcons = function()
             end
 
             -- These buiild dynamically, so need to only load on-demand, as needed
-            if #GRM_GI.compactRaidIcons < 40 then
+            if #GRM_GI.compactRaidIcons <= 40 then
                 for i = 1 , 40 do
                     if not GRM_GI.compactRaidIcons[i] then
                         button = _G["CompactRaidFrame" .. i];
@@ -1160,6 +1161,25 @@ GRM_GI.EstablishGroupIcons = function()
                             GRM_GI.ConfigureRaidAndPartyIcons ( button , "micro" , button["raidTradeDistanceIconBorder" .. i] , button["raidTradeDistanceIcon" .. i] );
                         else
                             break;
+                        end
+                    end
+                end
+            end
+
+            if #GRM_GI.compactRaidGroupIcons <= 40 then
+                for i = 1 , 8 do
+                    for j = 1 , 5 do
+                        if not GRM_GI.compactRaidGroupIcons[i] then
+                            button = _G["CompactRaidGroup" .. i .. "Member" .. j];
+                            if button ~= nil then
+                                GRM.CreateTexture ( button , "raidTradeDistanceIcon" .. i , "ARTWORK" , true );
+                                GRM.CreateTexture ( button , "raidTradeDistanceIconBorder" .. i , "OVERLAY" , true );
+                                GRM_GI.compactRaidGroupIcons[i] = { button , button["raidTradeDistanceIconBorder"..i] , button["raidTradeDistanceIcon"..i] };
+
+                                GRM_GI.ConfigureRaidAndPartyIcons ( button , "micro" , button["raidTradeDistanceIconBorder" .. i] , button["raidTradeDistanceIcon" .. i] );
+                            else
+                                break;
+                            end
                         end
                     end
                 end
@@ -1232,7 +1252,7 @@ GRM_GI.EstablishGroupIcons = function()
                                 GRM_GI.customFrameIcons[i][j] = { button , button["raidTradeDistanceIconBorder" .. i .. "_" .. j] , button["raidTradeDistanceIcon" .. i .. "_" .. j] };
                             end
 
-                            GRM_GI.ConfigureRaidAndPartyIcons ( button , "custom" , button["raidTradeDistanceIconBorder" .. i] , button["raidTradeDistanceIcon" .. i] , i );
+                            GRM_GI.ConfigureRaidAndPartyIcons ( button , "custom" , button["raidTradeDistanceIconBorder" .. i .. "_" .. j] , button["raidTradeDistanceIcon" .. i .. "_" .. j] , i );
                         elseif i == 2 then
                             GRM_GI.customFrameIcons[i][j] = false;
                         end
@@ -1417,6 +1437,32 @@ GRM_GI.RefreshRaidInteractIconVisibility = function()
                 if GRM_GI.compactRaidIcons[i][1]:IsVisible() then
                     GRM_GI.compactRaidIcons[i][2]:Hide();
                     GRM_GI.compactRaidIcons[i][3]:Hide();
+                end
+            end
+        end
+
+        -- This is for the core raid Frame that now exists in retail
+        for i = 1 , #GRM_GI.compactRaidGroupIcons do
+            if GRM_GI.compactRaidGroupIcons[i][1].name ~= nil then
+                nameTest = GRM_GI.compactRaidGroupIcons[i][1].name:GetText();
+            else
+                nameTest = nil;
+            end
+            if nameTest ~= nil and nameTest ~= UnitName ( "PLAYER" ) then
+                name = GRM.AppendServerName ( nameTest );
+        
+                if GRM_G.GroupInfo[name] ~= nil and GRM_G.GroupInfo[name].canTrade then
+                    GRM_GI.compactRaidGroupIcons[i][2]:Show();
+                    GRM_GI.compactRaidGroupIcons[i][3]:Show();
+                else
+                    GRM_GI.compactRaidGroupIcons[i][2]:Hide();
+                    GRM_GI.compactRaidGroupIcons[i][3]:Hide();
+                end
+        
+            else
+                if GRM_GI.compactRaidGroupIcons[i][1]:IsVisible() then
+                    GRM_GI.compactRaidGroupIcons[i][2]:Hide();
+                    GRM_GI.compactRaidGroupIcons[i][3]:Hide();
                 end
             end
         end
@@ -1685,7 +1731,7 @@ GRMGI_UI.InitializeUIFrames = function()
     GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembersDateLeft:SetJustifyH ( "CENTER" );    
     GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembersDateLeft:SetWidth ( 100 );
     GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembersDateLeft:SetWordWrap ( false );
-
+    
     if GRM_G.BuildVersion >= 20000 then
         GRMGI_UI.GRM_GroupButtonFrame.TextFromServer:SetPoint ( "TOPLEFT" , GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembers , "BOTTOMLEFT" , -5 , - 10 );
     else
@@ -1696,12 +1742,14 @@ GRMGI_UI.InitializeUIFrames = function()
         if not GRMGI_UI.GRM_GroupButtonFrame:IsVisible() then
             GRM_GI.BuildGroupButtonFrame ();
 
-            GRM_UI.SetTooltipScale()
-            GameTooltip:SetOwner ( self , "ANCHOR_CURSOR" );
-            GameTooltip:AddLine ( GRM.L ( "Click to Lock Info Window" ) );
-            GameTooltip:AddLine ( " " );
-            GameTooltip:AddLine ( GRM.L ( "|CFFE6CC7FCtrl-Left-Click|r and drag to move this button anywhere." ) );
-            GameTooltip:Show();
+            if not GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.DisableGroupInfoTooltip then
+                GRM_UI.SetTooltipScale()
+                GameTooltip:SetOwner ( self , "ANCHOR_CURSOR" );
+                GameTooltip:AddLine ( GRM.L ( "Click to Lock Info Window" ) );
+                GameTooltip:AddLine ( " " );
+                GameTooltip:AddLine ( GRM.L ( "{custom1} and drag to move this button anywhere." , nil , nil , nil , "|CFFE6CC7F" .. GRM.L ( "Ctrl-Left-Click" ) .. "|r" ) );
+                GameTooltip:Show();
+            end
 
         end
     end);
@@ -1710,8 +1758,10 @@ GRMGI_UI.InitializeUIFrames = function()
         if not GRM_GI.lock then
             GRMGI_UI.GRM_GroupButtonFrame:Hide();
 
-            GRM_UI.RestoreTooltipScale();
-            GameTooltip:Hide();
+            if not GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.DisableGroupInfoTooltip then
+                GRM_UI.RestoreTooltipScale();
+                GameTooltip:Hide();
+            end
 
         end
     end);
@@ -1844,6 +1894,7 @@ GRM_UI.LoadGroupInfoOptions = function()
             if button == "LeftButton" then
                 if self:GetChecked() then
                     GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.enabled = true;
+                    GRM_GI.GroupRosterUpdate();
                 else
                     GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.enabled = false;
                     GRMGI_UI.GRM_GroupRulesButton:Hide();
@@ -1913,6 +1964,26 @@ GRM_UI.LoadGroupInfoOptions = function()
 
         GRM_GI.optionsLoaded = true;
     end
+
+    -- Options Disable tooltip info
+    GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton = CreateFrame ( "CheckButton" , "GRM_DisableGroupInfoTooltipCheckButton" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame , GRM_G.CheckButtonTemplate );
+    GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:CreateFontString ( nil , "OVERLAY" , "GameFontNormalSmall" );
+    GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:SetPoint ( "TOPLEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton , "BOTTOMLEFT" , 0 , -6 );
+    GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText:SetPoint ( "LEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton , "RIGHT" , 1 , 0 );
+    
+    GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:SetScript ( "OnClick" , function( self , button )
+        if button == "LeftButton" then
+            if self:GetChecked() then
+                GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.DisableGroupInfoTooltip = true;
+            else
+                GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.DisableGroupInfoTooltip = false;
+            end
+            GRM_UI.ConfigureGroupInfoRules();
+            GRM.SyncSettings();
+        end
+    end);
+
+
     GRM_UI.ConfigureGroupInfoRules();
     GRM_UI.LocalizeOptions();
 end
@@ -1923,13 +1994,18 @@ end
 GRM_UI.ConfigureGroupInfoRules = function()
     if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.enabled then
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton:SetChecked ( true );
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButtonText:SetTextColor ( 1.0 , 0.82 , 0 , 1.0 );
 
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButtonText:SetTextColor ( 1.0 , 0.82 , 0 , 1.0 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton:Enable();
 
         if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.InteractDistanceIndicator then
             GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton:SetChecked ( true );
+        end
+
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText:SetTextColor ( 1.0 , 0.82 , 0 , 1.0 );
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:Enable();
+        if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.DisableGroupInfoTooltip then
+            GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:SetChecked ( true );
         end
 
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerText:SetTextColor ( 1.0 , 0.82 , 0 , 1.0 );
@@ -1939,12 +2015,16 @@ GRM_UI.ConfigureGroupInfoRules = function()
 
 
     else
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButtonText:SetTextColor ( 0.5 , 0.5 , 0.5 , 1 );
-
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButtonText:SetTextColor ( 0.5 , 0.5 , 0.5 , 1 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton:Disable();
-        if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.InteractDistanceIndicator then
+        if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.DisableGroupInfoTooltip then
             GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton:SetChecked ( true );
+        end
+
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText:SetTextColor ( 0.5, 0.5 , 0.5 , 1.0 );
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:Disable();
+        if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.DisableGroupInfoTooltip then
+            GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:SetChecked ( true );
         end
 
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerText:SetTextColor ( 0.5 , 0.5 , 0.5 , 1.0 );
@@ -1971,6 +2051,11 @@ GRM_UI.LocalizeOptions = function()
 
     GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerText:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 12 );
     GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerText:SetText ( "|cffff0000<>|r " .. GRM.L ( "Choose Color:" ) );
+
+    GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 12 );
+    GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText:SetText ( GRM.L ( "Disable tooltip. Only show popout window." ) );
+    GRM.NormalizeHitRects ( GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText );
+
 end
 
 -- Method:          GRM.DisableGroupInfoModule()
