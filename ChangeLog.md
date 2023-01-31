@@ -1,4 +1,3 @@
-
 **RELEASE Ver. 1.15**
 
 * Fixed an issue where a lua error would occur preventing addon module from loading if using a custom UI, like ElvUI or Shadowed Frames, etc...
@@ -81,4 +80,3 @@
 
 - Grid
 
-- Luna Unit Frames (Classic)
