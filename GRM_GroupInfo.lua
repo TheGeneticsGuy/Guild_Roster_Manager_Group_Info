@@ -40,10 +40,6 @@ local customAddon = {
     ["LunaUnitFrames"] = { "LUFHeaderpartyUnitButton" , "LUFHeaderraidXXUnitButtonYY" }
 };
 
--- Events
-GRM_GI.EventListener = CreateFrame ( "Frame" );
-GRM_GI.EventListener.timer = 0; -- Prevent spam controls
-
 -- Method:          GRM_GI.GetNumGroupMembersAndStatusDetails()
 -- What it Does:    Returns the number of guildies you are currently grouped with
 -- Purpose:         Useful to know when in a group
@@ -867,15 +863,6 @@ GRM_GI.BuildServerMemberTooltip = function ( button , ind )
     GameTooltip:Show();
 end
 
--- Method:          GRM_GI.RegisterGroupEvents()
--- What it Does:    Register the necessary event to be listened to
--- Purpose:         To know when a new player joins the group or leaves the group
-GRM_GI.RegisterGroupEvents = function()
-    GRM_GI.EventListener:RegisterEvent ( "GROUP_ROSTER_UPDATE" );
-    GRM_GI.EventListener:RegisterEvent ( "GROUP_LEFT" );
-    GRM_GI.EventListener:RegisterEvent ( "PLAYER_ROLES_ASSIGNED" );
-end
-
 -- Method:          GRM_GI.GroupCheckRepeatControl()
 -- What it Does:    It rechecks the groupRosterStatus 3 times, jsut in case, due to variouus reasons, the server doesn't communicate back group status quick enough.
 -- Purpose:         The button may not appear if it doesn't register group statuss instantly. This ensures the check.
@@ -895,26 +882,26 @@ end
 -- Method:          GRM_GI.EventListener()
 -- What it Does:    Listens for the tracked events and initiates the given function
 -- Purpose:         Event listening control
-GRM_GI.EventListener:SetScript ( "OnEvent" , function( _ , eventName )
+GRM_GI.EventListener = function()
 
     -- Sometimes there is a delay with the server, so we are going to trigger it 3 times to check
-    if ( time() - GRM_GI.EventListener.timer ) >= 3.1 then
+    if ( time() - GRM_G.StatusChecking.Timer ) >= 3.1 then
         
         C_Timer.After ( 1 , function()
             GRM_GI.GroupCheckRepeatControl ( 1 );
         end);
 
         GRMGI_UI.GroupInfoButtonInit();
-        GRM_GI.EventListener.timer = time();
+        GRM_G.StatusChecking.Timer = time();
     end
 
-end);
+end
 
 -- Method:          GRM_GI.GroupRosterUpdate()
 -- What it Does:    Calls the roster update or clears it
 -- Purpose:         Live control of group info for use
 GRM_GI.GroupRosterUpdate = function()
-     if IsInGuild() and IsInGroup() then
+     if IsInGuild() and GRM_G.InGroup then
         C_Timer.After ( 1 , function()
             GRM_GI.UpdateGroupInfo ( false );
 
@@ -961,10 +948,9 @@ GRM_GI.LoadGroupInfoModuleSettings = function()
     else
         GRM_GI.RegisterModule();
         GRMGI_UI.LoadUI();
-        GRM_GI.RegisterGroupEvents();
 
         -- If a player reloads - need to reload this info as needed.
-        if IsInGuild() and IsInGroup() then
+        if IsInGuild() and GRM_G.InGroup then
             GRM_GI.UpdateGroupInfo();
         end
     end
@@ -1131,7 +1117,7 @@ end
 -- Purpose:         Useful information for the player in a raid group
 GRM_GI.EstablishGroupIcons = function()
 
-    if IsInGroup() then
+    if GRM_G.InGroup then
         if IsInRaid() then
             if #GRM_GI.raidIcons <= 40 then
                 for i = 1 , 40 do
@@ -1548,7 +1534,7 @@ end
 -- What it Does:    Adjusts the position of the button depending on if the raid window is open or not
 -- Purpose:         Flexible adjustment of the location of the GMR Group Info frame
 GRM_GI.SetGroupInfoButtonPosition = function()
-    if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.enabled and IsInGuild() and ( IsInRaid() or IsInGroup() ) and GRM_GI.GetNumGroupMembersAndStatusDetails() > 1 then
+    if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.enabled and IsInGuild() and ( IsInRaid() or GRM_G.InGroup ) and GRM_GI.GetNumGroupMembersAndStatusDetails() > 1 then
 
         if not GRMGI_UI.GRM_GroupRulesButton:IsVisible() then
             GRMGI_UI.GRM_GroupRulesButton:Show();
@@ -1665,7 +1651,7 @@ GRMGI_UI.LoadUI = function()
     GRMGI_UI.GroupInfoButtonInit();
 
     -- Double Check if windows are already open
-    if ( RaidFrame:IsVisible() and IsInRaid() ) or ( CompactRaidFrameManager:IsVisible() and IsInGroup() ) then
+    if ( RaidFrame:IsVisible() and IsInRaid() ) or ( CompactRaidFrameManager:IsVisible() and GRM_G.InGroup ) then
         GRM_GI.EstablishGroupIcons();
     end
     GRM_GI.SetGroupInfoButtonPosition();
@@ -1796,7 +1782,7 @@ GRMGI_UI.InitializeUIFrames = function()
 
         if IsInRaid() then
             GRM_GroupInfo_Save[GRM_G.addonUser].raid = { side1 , side2 , point1 , point2 };
-        elseif IsInGroup() then
+        elseif GRM_G.InGroup then
             GRM_GroupInfo_Save[GRM_G.addonUser].party = { side1 , side2 , point1 , point2 };
         end
     end

@@ -1,3 +1,14 @@
+
+**RELEASE Ver. 1.17**
+
+* Fixed some Lua errors that were occurring.
+
+* Compatibility with 10.0.7 in Retail
+
+**RELEASE Ver. 1.16**
+
+* Fixed a lua error that could occur when mousing over a player right when they drop group.
+
 **RELEASE Ver. 1.15**
 
 * Fixed an issue where a lua error would occur preventing addon module from loading if using a custom UI, like ElvUI or Shadowed Frames, etc...
@@ -80,3 +91,4 @@
 
 - Grid
 
+- Luna Unit Frames (Classic)
