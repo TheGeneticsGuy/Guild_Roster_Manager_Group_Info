@@ -1,4 +1,14 @@
 
+**RELEASE Ver. 1.18 - PENDING**
+
+* Fixed Lua error that could occur when joining a guild, whilst in party with someone from the guild you are joining... the first trigger of the "GuildData" would not yet be available as you would still be configuring the guild the first time. Now it will wait until data is ready.
+
+* Fixed it so the "Trade distance icon" now properly shows on all the new frame formats, inlcuding party/raid frames. Previously it was only showing on the GRM and the old "O" social window, but not the new raid/party frames beyond the first button.
+
+***QUALITY OF LIFE***
+
+* If the Group Info module does not matchup with the latest GRM addon, because it is outdated, you will now be notified after login.
+
 **RELEASE Ver. 1.17**
 
 * Fixed some Lua errors that were occurring.

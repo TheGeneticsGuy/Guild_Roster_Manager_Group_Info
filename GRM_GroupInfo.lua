@@ -15,6 +15,11 @@ GRM_GroupInfo_Save = {};
 GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
+-- Version
+GRM_GI.version = 1.18;
+GRM_GI.GRMVer = 1.96;
+GRM_GI.UpgradeAnnounce = false;
+
 -- Global Variables
 GRM_GI.lock = false;
 GRM_GI.raidIcons = {};
@@ -137,7 +142,7 @@ end
 -- Purpose:         Useful to grab so you can know if the player you are grouped with has alts still in the guild.
 GRM_GI.GetAltNames = function ( listOfAlts )
     local alts = {};
-    local guildData = GRM_GuildMemberHistory_Save[ GRM_G.F ][ GRM_G.guildName ];
+    local guildData = GRM.GetGuild();
 
     for i = 1 , #listOfAlts do
         alts[ listOfAlts[i][1] ] = {};
@@ -163,14 +168,18 @@ GRM_GI.IsPlayerFormerMemberByGUID = function ( guid )
     local result = false;
 
     if guid ~= nil and guid ~= "" then
-        local formerMemberData = GRM_PlayersThatLeftHistory_Save[ GRM_G.F ][ GRM_G.guildName ];
-        for _ , player in pairs ( formerMemberData ) do
+
+        local oldMemberData = GRM.GetFormerMembers();
+
+        for _ , player in pairs ( oldMemberData ) do
             if type ( player ) == "table" then
+
                 if player.GUID ~= "" and player.GUID == guid then
                     result = true;
                     playerInfo = { player.bannedInfo[1] , player.bannedInfo[2] , player.reasonBanned , player.name , player.alts , player.isMain , GRM.FormatTimeStamp ( { player.joinDateHist[1][1] , player.joinDateHist[1][2] , player.joinDateHist[1][3] } ) }; -- [1] = isBanned = true/false ; [2] = dateBannedEpoch
                     break;
                 end
+
             end
         end
 
@@ -206,125 +215,128 @@ GRM_GI.UpdateGroupInfo = function( forcedFullRefresh )
     local n = GetNumGroupMembers();
     local groupType = { ["false"] = "party" , ["true"] = "raid" };
     local group = groupType[tostring ( IsInRaid() )];
-    local guildData = GRM_GuildMemberHistory_Save[ GRM_G.F ][ GRM_G.guildName ];
-    local formerMemberData = GRM_PlayersThatLeftHistory_Save[ GRM_G.F ][ GRM_G.guildName ];
+    local guildData = GRM.GetGuild();
+    local formerMemberData = GRM.GetFormerMembers();
     local name , unit = "" , "";
     local tempListNames = {};
 
-    for i = 1 , n do
-        unit = group .. i;
-        name = GRM_GI.GetUnitFullName ( unit );
+    if guildData then
 
-        if name then
-            tempListNames[name] = {};
-            tempListNames[name].guid = UnitGUID( unit );
-            tempListNames[name].class = select ( 2 , UnitClass ( unit ) );
-            if name == GRM_G.addonUser then
-                tempListNames[name].unitID = "self";
-            else
-                tempListNames[name].unitID = group .. i;
+        for i = 1 , n do
+            unit = group .. i;
+            name = GRM_GI.GetUnitFullName ( unit );
+
+            if name then
+                tempListNames[name] = {};
+                tempListNames[name].guid = UnitGUID( unit );
+                tempListNames[name].class = select ( 2 , UnitClass ( unit ) );
+                if name == GRM_G.addonUser then
+                    tempListNames[name].unitID = "self";
+                else
+                    tempListNames[name].unitID = group .. i;
+                end
+            end
+
+            if i == n and not tempListNames[GRM_G.addonUser] then
+                tempListNames[GRM_G.addonUser] = {};
+                tempListNames[GRM_G.addonUser].guid = guildData[GRM_G.addonUser].GUID;
+                tempListNames[GRM_G.addonUser].class = guildData[GRM_G.addonUser].class;
+                tempListNames[GRM_G.addonUser].unitID = "self";
             end
         end
 
-        if i == n and not tempListNames[GRM_G.addonUser] then
-            tempListNames[GRM_G.addonUser] = {};
-            tempListNames[GRM_G.addonUser].guid = guildData[GRM_G.addonUser].GUID;
-            tempListNames[GRM_G.addonUser].class = guildData[GRM_G.addonUser].class;
-            tempListNames[GRM_G.addonUser].unitID = "self";
+        -- Now, we do cleanup of names of players no longer in group.
+        for player in pairs ( GRM_G.GroupInfo ) do
+
+        if tempListNames [ player ] == nil then
+                GRM_G.GroupInfo [ player ] = nil;
         end
-    end
 
-    -- Now, we do cleanup of names of players no longer in group.
-    for player in pairs ( GRM_G.GroupInfo ) do
+        end
 
-       if tempListNames [ player ] == nil then
-            GRM_G.GroupInfo [ player ] = nil;
-       end
+        -- Now we add new names
+        for player , unitInfo in pairs ( tempListNames ) do
+            -- If the player has not been built the first time, now build it.
+            if GRM_G.GroupInfo[ player ] == nil or ( GRM_G.GroupInfo[ player ] ~= nil and GRM_G.GroupInfo[ player ].unitID ~= unitInfo.unitID ) or forcedFullRefresh then
+                GRM_G.GroupInfo[ player ] = {};
 
-    end
+                -- Check if current guildie
+                if guildData[ player ] ~= nil then
+                    GRM_G.GroupInfo[ player ].isGuildie = true;
+                    GRM_G.GroupInfo[ player ].isFormerGuildie = false;
+                    GRM_G.GroupInfo[ player ].isBanned = { guildData[ player ].bannedInfo[1] , guildData[ player ].bannedInfo[2] , guildData[ player ].reasonBanned , "" };
+                    GRM_G.GroupInfo[ player ].connectedRealm = true;
 
-    -- Now we add new names
-    for player , unitInfo in pairs ( tempListNames ) do
-        -- If the player has not been built the first time, now build it.
-        if GRM_G.GroupInfo[ player ] == nil or ( GRM_G.GroupInfo[ player ] ~= nil and GRM_G.GroupInfo[ player ].unitID ~= unitInfo.unitID ) or forcedFullRefresh then
-            GRM_G.GroupInfo[ player ] = {};
-
-            -- Check if current guildie
-            if guildData[ player ] ~= nil then
-                GRM_G.GroupInfo[ player ].isGuildie = true;
-                GRM_G.GroupInfo[ player ].isFormerGuildie = false;
-                GRM_G.GroupInfo[ player ].isBanned = { guildData[ player ].bannedInfo[1] , guildData[ player ].bannedInfo[2] , guildData[ player ].reasonBanned , "" };
-                GRM_G.GroupInfo[ player ].connectedRealm = true;
-
-            -- Check if former guildie
-            elseif formerMemberData[ player ] ~= nil then
-                GRM_G.GroupInfo[ player ].isGuildie = false;
-                GRM_G.GroupInfo[ player ].isFormerGuildie = true;
-                GRM_G.GroupInfo[ player ].dateLeft = GRM.FormatTimeStamp ( { formerMemberData[ player ].joinDateHist[1][1] , formerMemberData[ player ].joinDateHist[1][2] , formerMemberData[ player ].joinDateHist[1][3] } )
-                GRM_G.GroupInfo[ player ].isBanned = { formerMemberData[ player ].bannedInfo[1] , formerMemberData[ player ].bannedInfo[2] , formerMemberData[ player ].reasonBanned , "" };
-                GRM_G.GroupInfo[ player ].alts = GRM_GI.GetAltNames ( formerMemberData[ player ].alts );
-                GRM_G.GroupInfo[ player ].isMain = formerMemberData[ player ].isMain;
-                GRM_G.GroupInfo[ player ].main = {};
-                GRM_G.GroupInfo[ player ].connectedRealm = true;
-
-                if not GRM_G.GroupInfo[ player ].isMain and #formerMemberData[ player ].alts > 0 then
-                    for i = 1 , #formerMemberData[ player ].alts do
-                        if formerMemberData[ player ].alts[i][5] then
-                            GRM_G.GroupInfo[ player ].main = formerMemberData[ player ].alts[i];
-                            break;
-                        end
-                    end
-                end
-
-            -- Check if
-            else
-                local identified , playerInfo = GRM_GI.IsPlayerFormerMemberByGUID ( unitInfo.guid )
-
-                -- if Identified then the player name-Changed
-                if identified then
+                -- Check if former guildie
+                elseif formerMemberData[ player ] ~= nil then
+                    GRM_G.GroupInfo[ player ].isGuildie = false;
                     GRM_G.GroupInfo[ player ].isFormerGuildie = true;
-                    GRM_G.GroupInfo[ player ].dateLeft = playerInfo[7];
-                    GRM_G.GroupInfo[ player ].isBanned = { playerInfo[1] , playerInfo[2] , playerInfo[3] , playerInfo[4]};     -- isBanned, timeOfBanEpoch , reasonBanned, newName - Note, if not a nameChange then "playerInfo[4]" would be "" to check for empty string
-                    GRM_G.GroupInfo[ player ].alts = GRM_GI.GetAltNames ( playerInfo[5] );
-                    GRM_G.GroupInfo[ player ].isMain = playerInfo[6];
+                    GRM_G.GroupInfo[ player ].dateLeft = GRM.FormatTimeStamp ( { formerMemberData[ player ].joinDateHist[1][1] , formerMemberData[ player ].joinDateHist[1][2] , formerMemberData[ player ].joinDateHist[1][3] } )
+                    GRM_G.GroupInfo[ player ].isBanned = { formerMemberData[ player ].bannedInfo[1] , formerMemberData[ player ].bannedInfo[2] , formerMemberData[ player ].reasonBanned , "" };
+                    GRM_G.GroupInfo[ player ].alts = GRM_GI.GetAltNames ( formerMemberData[ player ].alts );
+                    GRM_G.GroupInfo[ player ].isMain = formerMemberData[ player ].isMain;
                     GRM_G.GroupInfo[ player ].main = {};
                     GRM_G.GroupInfo[ player ].connectedRealm = true;
 
-                    if not GRM_G.GroupInfo[ player ].isMain and #playerInfo[5] > 0 then
-                        for i = 1 , #playerInfo[5] do
-                            if playerInfo[5][i][5] then
-                                GRM_G.GroupInfo[ player ].main = playerInfo[5][i];
+                    if not GRM_G.GroupInfo[ player ].isMain and #formerMemberData[ player ].alts > 0 then
+                        for i = 1 , #formerMemberData[ player ].alts do
+                            if formerMemberData[ player ].alts[i][5] then
+                                GRM_G.GroupInfo[ player ].main = formerMemberData[ player ].alts[i];
                                 break;
                             end
                         end
                     end
 
+                -- Check if
                 else
-                    GRM_G.GroupInfo[ player ].isFormerGuildie = false;
-                    GRM_G.GroupInfo[ player ].isBanned = { false };
-                    GRM_G.GroupInfo[ player ].alts = {};
-                    GRM_G.GroupInfo[ player ].connectedRealm = false;           -- This will be checked in other function if we know it is not a guildie, or a former guildie. Is it at least connected realm member?
+                    local identified , playerInfo = GRM_GI.IsPlayerFormerMemberByGUID ( unitInfo.guid )
 
+                    -- if Identified then the player name-Changed
+                    if identified then
+                        GRM_G.GroupInfo[ player ].isFormerGuildie = true;
+                        GRM_G.GroupInfo[ player ].dateLeft = playerInfo[7];
+                        GRM_G.GroupInfo[ player ].isBanned = { playerInfo[1] , playerInfo[2] , playerInfo[3] , playerInfo[4]};     -- isBanned, timeOfBanEpoch , reasonBanned, newName - Note, if not a nameChange then "playerInfo[4]" would be "" to check for empty string
+                        GRM_G.GroupInfo[ player ].alts = GRM_GI.GetAltNames ( playerInfo[5] );
+                        GRM_G.GroupInfo[ player ].isMain = playerInfo[6];
+                        GRM_G.GroupInfo[ player ].main = {};
+                        GRM_G.GroupInfo[ player ].connectedRealm = true;
+
+                        if not GRM_G.GroupInfo[ player ].isMain and #playerInfo[5] > 0 then
+                            for i = 1 , #playerInfo[5] do
+                                if playerInfo[5][i][5] then
+                                    GRM_G.GroupInfo[ player ].main = playerInfo[5][i];
+                                    break;
+                                end
+                            end
+                        end
+
+                    else
+                        GRM_G.GroupInfo[ player ].isFormerGuildie = false;
+                        GRM_G.GroupInfo[ player ].isBanned = { false };
+                        GRM_G.GroupInfo[ player ].alts = {};
+                        GRM_G.GroupInfo[ player ].connectedRealm = false;           -- This will be checked in other function if we know it is not a guildie, or a former guildie. Is it at least connected realm member?
+
+                    end
+                    GRM_G.GroupInfo[ player ].isGuildie = false;
                 end
-                GRM_G.GroupInfo[ player ].isGuildie = false;
+
+                GRM_G.GroupInfo[ player ].name = player;
+                GRM_G.GroupInfo[ player ].class = unitInfo.class;
+                GRM_G.GroupInfo[ player ].isReportedOn = false;
             end
 
-            GRM_G.GroupInfo[ player ].name = player;
-            GRM_G.GroupInfo[ player ].class = unitInfo.class;
-            GRM_G.GroupInfo[ player ].isReportedOn = false;
+            -- Rebuild these values every time anyway
+            GRM_G.GroupInfo[ player ].unitID = unitInfo.unitID;
+            if GRM_G.GroupInfo[ player ].unitID == "self" then
+                GRM_G.GroupInfo[ player ].canTrade = false;
+            else
+                GRM_G.GroupInfo[ player ].canTrade = CheckInteractDistance ( unitInfo.unitID , 2 );
+            end
         end
 
-        -- Rebuild these values every time anyway
-        GRM_G.GroupInfo[ player ].unitID = unitInfo.unitID;
-        if GRM_G.GroupInfo[ player ].unitID == "self" then
-            GRM_G.GroupInfo[ player ].canTrade = false;
-        else
-            GRM_G.GroupInfo[ player ].canTrade = CheckInteractDistance ( unitInfo.unitID , 2 );
-        end
+        -- Do every time this updates as needed
+        GRM_GI.EstablishGroupIcons();
     end
-
-    -- Do every time this updates as needed
-    GRM_GI.EstablishGroupIcons();
 end
 
 
@@ -406,8 +418,8 @@ GRM_GI.SetValueButtonFrame = function ( type , buttonDetails , sizeBiggest )
             name = GRM.GetClassColorRGB ( player.class , true ) .. player.name .. "|r";
         end
 
-        local mainTag = GRM_G.MainTagHexCode .. GRM.GetMainTags ( false , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].mainTagIndex ) .. "|r";
-        local altTag = GRM_G.MainTagHexCode .. GRM.GetAltTags ( false , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].mainTagIndex ) .. "|r"
+        local mainTag = GRM_G.MainTagHexCode .. GRM.GetMainTags ( false , GRM.S().mainTagIndex ) .. "|r";
+        local altTag = GRM_G.MainTagHexCode .. GRM.GetAltTags ( false , GRM.S().mainTagIndex ) .. "|r"
         local numAltsStillInGuild = GRM_GI.GetNumAltsStillInGuild ( player.alts );
 
         if player.isMain then
@@ -464,7 +476,7 @@ end
 -- What it Does:    Sets the texture and dimensions and position of the icon on each of the buttons
 -- Purpose:         Useful texture indictator if someone is within inspection distance of you
 GRM_GI.ConfigureTradeDistanceIcon = function ( button )
-    local color = GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm;
+    local color = GRM.S().GIModule.tradeIndicatorColorConnectedRealm;
     button.tradeDistanceIconBorder:SetPoint ( "RIGHT" , button , "LEFT" , 14 , -4 );
     button.tradeDistanceIconBorder:SetTexture ( "Interface\\Minimap\\MiniMap-TrackingBorder" );
     button.tradeDistanceIconBorder:SetWidth ( 18 );
@@ -771,7 +783,7 @@ GRM_GI.BuildMemberTooltip = function ( button , ind )
     GameTooltip:SetOwner ( button , "ANCHOR_CURSOR" );
     GameTooltip:AddLine( GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[ind][2]:GetText() );
     if player.canTrade then
-        GameTooltip:AddLine ( GRM.L ( "Close Enough to Trade" ) , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[1] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[2] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[3] );
+        GameTooltip:AddLine ( GRM.L ( "Close Enough to Trade" ) , GRM.S().GIModule.tradeIndicatorColorConnectedRealm[1] , GRM.S().GIModule.tradeIndicatorColorConnectedRealm[2] , GRM.S().GIModule.tradeIndicatorColorConnectedRealm[3] );
     end
     GameTooltip:AddLine ( " " );
 
@@ -789,12 +801,12 @@ GRM_GI.BuildFormerMemberTooltip = function ( button , ind )
     GameTooltip:AddLine( GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[ind][2]:GetText() );
     
     if player.canTrade then
-        GameTooltip:AddLine ( GRM.L ( "Close Enough to Trade" ) , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[1] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[2] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[3] );
+        GameTooltip:AddLine ( GRM.L ( "Close Enough to Trade" ) , GRM.S().GIModule.tradeIndicatorColorConnectedRealm[1] , GRM.S().GIModule.tradeIndicatorColorConnectedRealm[2] , GRM.S().GIModule.tradeIndicatorColorConnectedRealm[3] );
     end
 
     -- if a NameChange
     if player.isBanned[4] ~= "" then
-        GameTooltip:AddLine ( GRM.L ( "{name} has Name-Changed to {name2}" , GRM.GetClassColorRGB ( player.class , true ) .. GRM.SetName ( player.isBanned[4] ) .. "|r" , GRM.GetClassColorRGB ( player.class , true ) .. GRM.SetName ( player.name ) ) , 0.90 , 0.82 , 0.62 );
+        GameTooltip:AddLine ( GRM.L ( "{name} has Name-Changed to {name2}" , GRM.GetClassColorRGB ( player.class , true ) .. GRM.FormatName ( player.isBanned[4] ) .. "|r" , GRM.GetClassColorRGB ( player.class , true ) .. GRM.FormatName ( player.name ) ) , 0.90 , 0.82 , 0.62 );
     end
 
     -- If a Ban
@@ -828,9 +840,9 @@ GRM_GI.BuildFormerMemberTooltip = function ( button , ind )
             for name , alt in pairs ( player.alts ) do
                 msg = "";
                 if alt.currentMember then
-                    msg = ( alt.hexCode .. GRM.SetName ( name ) .. " " .. inGuild );
+                    msg = ( alt.hexCode .. GRM.FormatName ( name ) .. " " .. inGuild );
                 else
-                    msg = ( alt.hexCode .. GRM.SetName ( name ) );
+                    msg = ( alt.hexCode .. GRM.FormatName ( name ) );
                 end
 
                 if name == main then
@@ -858,7 +870,7 @@ GRM_GI.BuildServerMemberTooltip = function ( button , ind )
     GameTooltip:AddLine( GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[ind][2]:GetText() );
     
     if player.canTrade then
-        GameTooltip:AddLine ( GRM.L ( "Close Enough to Trade" ) , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[1] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[2] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[3] );
+        GameTooltip:AddLine ( GRM.L ( "Close Enough to Trade" ) , GRM.S().GIModule.tradeIndicatorColorConnectedRealm[1] , GRM.S().GIModule.tradeIndicatorColorConnectedRealm[2] , GRM.S().GIModule.tradeIndicatorColorConnectedRealm[3] );
     end
     GameTooltip:Show();
 end
@@ -935,6 +947,24 @@ GRM_GI.DelayCheck = function()
     C_Timer.After ( 5 , GRM_GI.LoadGroupInfoModuleSettings );
 end
 
+-- Method:          GRM_GI.UpgradeAnnounceMessage()
+-- What it Does:    Reports to player if addon module is outdated
+-- Purpose:         Make sure versions line up.
+GRM_GI.UpgradeAnnounceMessage = function()
+    if GRM_G.Version then
+        local GRMVersion = tonumber ( string.match ( GRM_G.Version , "R(.+)" ) );
+        local message = "Group Info Module is Outdated."
+
+        if GRMVersion > GRM_GI.GRMVer then
+            if GRMVersion > 1.96 then       -- Localization file didn't exist until 1.97
+                print ( GRM.L ( "GRM:" ) .. " " .. GRM.L ( message ) );
+            else
+                print ( "GRM: " .. message );
+            end
+        end
+    end
+end
+
 -- Method:          GRM_GI.LoadGroupInfoModuleSettings()
 -- What it Does:    Loads this module's settings, first by not loading until the core addon is loaded.
 -- Purpose:         Control actions as needed. Only load as needed
@@ -942,6 +972,12 @@ end
 --                  ultimately rejoins a guild. Thus it will disable, restart fresh, and re-enable the next time it groups up.
 GRM_GI.LoadGroupInfoModuleSettings = function()
     -- Make sure not to load this addon until the game DB is built first.
+
+    if not GRM_GI.UpgradeAnnounce and GRM_G.Version then
+        GRM_GI.UpgradeAnnounce = true;
+        GRM_GI.UpgradeAnnounceMessage();
+    end
+    
     if GRM_G.OnFirstLoad or not IsInGuild() then
         GRM_GI.DelayCheck();
         return;
@@ -990,7 +1026,7 @@ GRM_GI.ConfigureRaidAndPartyIcons = function ( button , tag , tradeDistanceIconB
     local hBorder = -3.5;
     local anchor1 = "RIGHT";
     local anchor2 = "RIGHT";
-    local color = GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm;
+    local color = GRM.S().GIModule.tradeIndicatorColorConnectedRealm;
     local textureSize = { 18 , 6 };
 
     if tag == "micro" then
@@ -1153,18 +1189,22 @@ GRM_GI.EstablishGroupIcons = function()
             end
 
             if #GRM_GI.compactRaidGroupIcons <= 40 then
+                local k = 0;
+
                 for i = 1 , 8 do
                     for j = 1 , 5 do
-                        if not GRM_GI.compactRaidGroupIcons[i] then
+                        k = ( ( i - 1 ) * 5 ) + j;
+                        if not GRM_GI.compactRaidGroupIcons[ k ] or #GRM_GI.compactRaidGroupIcons[ k ] == 0 then
+                            
                             button = _G["CompactRaidGroup" .. i .. "Member" .. j];
                             if button ~= nil then
-                                GRM.CreateTexture ( button , "raidTradeDistanceIcon" .. i , "ARTWORK" , true );
-                                GRM.CreateTexture ( button , "raidTradeDistanceIconBorder" .. i , "OVERLAY" , true );
-                                GRM_GI.compactRaidGroupIcons[i] = { button , button["raidTradeDistanceIconBorder"..i] , button["raidTradeDistanceIcon"..i] };
+                                GRM.CreateTexture ( button , "raidTradeDistanceIcon" .. k , "ARTWORK" , true );
+                                GRM.CreateTexture ( button , "raidTradeDistanceIconBorder" .. k , "OVERLAY" , true );
+                                GRM_GI.compactRaidGroupIcons[k] = { button , button["raidTradeDistanceIconBorder"..k] , button["raidTradeDistanceIcon"..k] };
 
-                                GRM_GI.ConfigureRaidAndPartyIcons ( button , "micro" , button["raidTradeDistanceIconBorder" .. i] , button["raidTradeDistanceIcon" .. i] );
+                                GRM_GI.ConfigureRaidAndPartyIcons ( button , "micro" , button["raidTradeDistanceIconBorder" .. k] , button["raidTradeDistanceIcon" .. k] );
                             else
-                                break;
+                                GRM_GI.compactRaidGroupIcons[ k ] = {};
                             end
                         end
                     end
@@ -1174,7 +1214,7 @@ GRM_GI.EstablishGroupIcons = function()
         else
             if #GRM_GI.partyIcons < 4 then
                 for i = 1 , 4 do
-                    button = _G["PartyMemberFrame" .. i];
+                    button = _G["PartyFrame"]["MemberFrame" .. i];
                     if button ~= nil then
                         GRM.CreateTexture ( button , "raidTradeDistanceIcon" .. i , "ARTWORK" , true );
                         GRM.CreateTexture ( button , "raidTradeDistanceIconBorder" .. i , "OVERLAY" , true );
@@ -1429,26 +1469,28 @@ GRM_GI.RefreshRaidInteractIconVisibility = function()
 
         -- This is for the core raid Frame that now exists in retail
         for i = 1 , #GRM_GI.compactRaidGroupIcons do
-            if GRM_GI.compactRaidGroupIcons[i][1].name ~= nil then
-                nameTest = GRM_GI.compactRaidGroupIcons[i][1].name:GetText();
-            else
-                nameTest = nil;
-            end
-            if nameTest ~= nil and nameTest ~= UnitName ( "PLAYER" ) then
-                name = GRM.AppendServerName ( nameTest );
-        
-                if GRM_G.GroupInfo[name] ~= nil and GRM_G.GroupInfo[name].canTrade then
-                    GRM_GI.compactRaidGroupIcons[i][2]:Show();
-                    GRM_GI.compactRaidGroupIcons[i][3]:Show();
+            if #GRM_GI.compactRaidGroupIcons[i] > 0 then
+                if GRM_GI.compactRaidGroupIcons[i][1].name ~= nil then
+                    nameTest = GRM_GI.compactRaidGroupIcons[i][1].name:GetText();
                 else
-                    GRM_GI.compactRaidGroupIcons[i][2]:Hide();
-                    GRM_GI.compactRaidGroupIcons[i][3]:Hide();
+                    nameTest = nil;
                 end
-        
-            else
-                if GRM_GI.compactRaidGroupIcons[i][1]:IsVisible() then
-                    GRM_GI.compactRaidGroupIcons[i][2]:Hide();
-                    GRM_GI.compactRaidGroupIcons[i][3]:Hide();
+                if nameTest ~= nil and nameTest ~= UnitName ( "PLAYER" ) then
+                    name = GRM.AppendServerName ( nameTest );
+            
+                    if GRM_G.GroupInfo[name] ~= nil and GRM_G.GroupInfo[name].canTrade then
+                        GRM_GI.compactRaidGroupIcons[i][2]:Show();
+                        GRM_GI.compactRaidGroupIcons[i][3]:Show();
+                    else
+                        GRM_GI.compactRaidGroupIcons[i][2]:Hide();
+                        GRM_GI.compactRaidGroupIcons[i][3]:Hide();
+                    end
+            
+                else
+                    if GRM_GI.compactRaidGroupIcons[i][1]:IsVisible() then
+                        GRM_GI.compactRaidGroupIcons[i][2]:Hide();
+                        GRM_GI.compactRaidGroupIcons[i][3]:Hide();
+                    end
                 end
             end
         end
@@ -1534,7 +1576,7 @@ end
 -- What it Does:    Adjusts the position of the button depending on if the raid window is open or not
 -- Purpose:         Flexible adjustment of the location of the GMR Group Info frame
 GRM_GI.SetGroupInfoButtonPosition = function()
-    if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.enabled and IsInGuild() and ( IsInRaid() or GRM_G.InGroup ) and GRM_GI.GetNumGroupMembersAndStatusDetails() > 1 then
+    if GRM.S().GIModule.enabled and IsInGuild() and ( IsInRaid() or GRM_G.InGroup ) and GRM_GI.GetNumGroupMembersAndStatusDetails() > 1 then
 
         if not GRMGI_UI.GRM_GroupRulesButton:IsVisible() then
             GRMGI_UI.GRM_GroupRulesButton:Show();
@@ -1728,7 +1770,7 @@ GRMGI_UI.InitializeUIFrames = function()
         if not GRMGI_UI.GRM_GroupButtonFrame:IsVisible() then
             GRM_GI.BuildGroupButtonFrame ();
 
-            if not GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.DisableGroupInfoTooltip then
+            if not GRM.S().GIModule.DisableGroupInfoTooltip then
                 GRM_UI.SetTooltipScale()
                 GameTooltip:SetOwner ( self , "ANCHOR_CURSOR" );
                 GameTooltip:AddLine ( GRM.L ( "Click to Lock Info Window" ) );
@@ -1744,7 +1786,7 @@ GRMGI_UI.InitializeUIFrames = function()
         if not GRM_GI.lock then
             GRMGI_UI.GRM_GroupButtonFrame:Hide();
 
-            if not GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.DisableGroupInfoTooltip then
+            if not GRM.S().GIModule.DisableGroupInfoTooltip then
                 GRM_UI.RestoreTooltipScale();
                 GameTooltip:Hide();
             end
@@ -1758,7 +1800,7 @@ GRMGI_UI.InitializeUIFrames = function()
 
         if GRMGI_UI.GRM_GroupRulesButton.Timer > 0.5 then
 
-            if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.InteractDistanceIndicator then
+            if GRM.S().GIModule.InteractDistanceIndicator then
                 GRM_GI.UpdateInteractDistance();
                 GRM_GI.RefreshRaidInteractIconVisibility();
                 GRMGI_UI.GRM_GroupRulesButton.Timer = 0;
@@ -1823,7 +1865,7 @@ GRMGI_UI.InitializeUIFrames = function()
 
     GRMGI_UI.GRM_GroupRulesButton:HookScript ( "OnLeave" , GRMGI_UI.GRM_GroupRulesButton:GetScript ( "OnMouseUp"  ) );
 
-    if not GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.enabled then
+    if not GRM.S().GIModule.enabled then
         GRMGI_UI.GRM_GroupRulesButton:Hide();
     end
 
@@ -1879,10 +1921,10 @@ GRM_UI.LoadGroupInfoOptions = function()
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton:SetScript ( "OnClick" , function( self , button )
             if button == "LeftButton" then
                 if self:GetChecked() then
-                    GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.enabled = true;
+                    GRM.S().GIModule.enabled = true;
                     GRM_GI.GroupRosterUpdate();
                 else
-                    GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.enabled = false;
+                    GRM.S().GIModule.enabled = false;
                     GRMGI_UI.GRM_GroupRulesButton:Hide();
                     GRM_GI.HideAllIcons();
                 end
@@ -1900,9 +1942,9 @@ GRM_UI.LoadGroupInfoOptions = function()
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton:SetScript ( "OnClick" , function( self , button )
             if button == "LeftButton" then
                 if self:GetChecked() then
-                    GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.InteractDistanceIndicator = true;
+                    GRM.S().GIModule.InteractDistanceIndicator = true;
                 else
-                    GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.InteractDistanceIndicator = false;
+                    GRM.S().GIModule.InteractDistanceIndicator = false;
                 end
                 GRM_UI.ConfigureGroupInfoRules();
                 GRM.SyncSettings();
@@ -1914,7 +1956,7 @@ GRM_UI.LoadGroupInfoOptions = function()
         GRM.CreateTexture ( GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame , "GRM_GroupInfoOptionsTexture" , "BACKGROUND" , true );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.GRM_GroupInfoOptionsTexture:SetPoint ( "CENTER" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.GRM_GroupInfoOptionsTexture:SetSize ( 15 , 15 );
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.GRM_GroupInfoOptionsTexture:SetColorTexture ( GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[1] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[2] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[3] , 1.0 );
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.GRM_GroupInfoOptionsTexture:SetColorTexture ( GRM.S().GIModule.tradeIndicatorColorConnectedRealm[1] , GRM.S().GIModule.tradeIndicatorColorConnectedRealm[2] , GRM.S().GIModule.tradeIndicatorColorConnectedRealm[3] , 1.0 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerText = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame:CreateFontString ( nil , "OVERLAY" , "GameFontNormalSmall" );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerText:SetPoint ( "LEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButtonText , "RIGHT" , 18 , 0 );
         
@@ -1932,7 +1974,7 @@ GRM_UI.LoadGroupInfoOptions = function()
 
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame:SetScript ( "OnMouseDown" , function ( _ , button )
             if button == "LeftButton" then
-                GRM.ShowCustomColorPicker ( GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[1] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[2] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[3] , 1.0 , 99 , function() end );
+                GRM.ShowCustomColorPicker ( GRM.S().GIModule.tradeIndicatorColorConnectedRealm[1] , GRM.S().GIModule.tradeIndicatorColorConnectedRealm[2] , GRM.S().GIModule.tradeIndicatorColorConnectedRealm[3] , 1.0 , 99 , function() end );
                 if IsAddOnLoaded ( "ColorPickerPlus" ) then
                     OpacitySliderFrame:Hide();
                     ColorPickerFrame:SetSize ( 380 , 380 );
@@ -1960,9 +2002,9 @@ GRM_UI.LoadGroupInfoOptions = function()
     GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:SetScript ( "OnClick" , function( self , button )
         if button == "LeftButton" then
             if self:GetChecked() then
-                GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.DisableGroupInfoTooltip = true;
+                GRM.S().GIModule.DisableGroupInfoTooltip = true;
             else
-                GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.DisableGroupInfoTooltip = false;
+                GRM.S().GIModule.DisableGroupInfoTooltip = false;
             end
             GRM_UI.ConfigureGroupInfoRules();
             GRM.SyncSettings();
@@ -1978,38 +2020,38 @@ end
 -- What it Does:    Reconfigures the buttons and text of this module to either be colored or greyed out
 -- Purpose:         UX feature greyed out if not in use for obvious disabling and enabling visual cue.
 GRM_UI.ConfigureGroupInfoRules = function()
-    if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.enabled then
+    if GRM.S().GIModule.enabled then
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton:SetChecked ( true );
 
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButtonText:SetTextColor ( 1.0 , 0.82 , 0 , 1.0 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton:Enable();
 
-        if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.InteractDistanceIndicator then
+        if GRM.S().GIModule.InteractDistanceIndicator then
             GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton:SetChecked ( true );
         end
 
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText:SetTextColor ( 1.0 , 0.82 , 0 , 1.0 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:Enable();
-        if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.DisableGroupInfoTooltip then
+        if GRM.S().GIModule.DisableGroupInfoTooltip then
             GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:SetChecked ( true );
         end
 
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerText:SetTextColor ( 1.0 , 0.82 , 0 , 1.0 );
 
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame:EnableMouse ( true );
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.GRM_GroupInfoOptionsTexture:SetColorTexture ( GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[1] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[2] , GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.tradeIndicatorColorConnectedRealm[3] , 1.0 );
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_GroupInfoColorPickerFrame.GRM_GroupInfoOptionsTexture:SetColorTexture ( GRM.S().GIModule.tradeIndicatorColorConnectedRealm[1] , GRM.S().GIModule.tradeIndicatorColorConnectedRealm[2] , GRM.S().GIModule.tradeIndicatorColorConnectedRealm[3] , 1.0 );
 
 
     else
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButtonText:SetTextColor ( 0.5 , 0.5 , 0.5 , 1 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton:Disable();
-        if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.DisableGroupInfoTooltip then
+        if GRM.S().GIModule.DisableGroupInfoTooltip then
             GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_ProximityCheckButton:SetChecked ( true );
         end
 
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText:SetTextColor ( 0.5, 0.5 , 0.5 , 1.0 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:Disable();
-        if GRM_AddonSettings_Save[GRM_G.F][GRM_G.addonUser].GIModule.DisableGroupInfoTooltip then
+        if GRM.S().GIModule.DisableGroupInfoTooltip then
             GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:SetChecked ( true );
         end
 
