@@ -971,19 +971,20 @@ end
 --                  Note: This is kept in the global GRM_G table so it can be accessed from the core GRM to reload if a player leaves a guild and 
 --                  ultimately rejoins a guild. Thus it will disable, restart fresh, and re-enable the next time it groups up.
 GRM_GI.LoadGroupInfoModuleSettings = function()
-    -- Make sure not to load this addon until the game DB is built first.
-
-    if not GRM_GI.UpgradeAnnounce and GRM_G.Version then
-        GRM_GI.UpgradeAnnounce = true;
-        GRM_GI.UpgradeAnnounceMessage();
-    end
-    
+    -- Make sure not to load this addon until the game DB is built first.    
     if GRM_G.OnFirstLoad or not IsInGuild() then
         GRM_GI.DelayCheck();
         return;
     else
         GRM_GI.RegisterModule();
         GRMGI_UI.LoadUI();
+
+        if not GRM_GI.UpgradeAnnounce and GRM_G.Version then
+            GRM_GI.UpgradeAnnounce = true;
+            if GRM.S().syncCompatibilityMsg then
+                GRM_GI.UpgradeAnnounceMessage();
+            end
+        end
 
         -- If a player reloads - need to reload this info as needed.
         if IsInGuild() and GRM_G.InGroup then
