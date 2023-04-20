@@ -17,7 +17,7 @@ GRMGI_UI = {};                -- Module UI table
 
 -- Version
 GRM_GI.version = 1.18;
-GRM_GI.GRMVer = 1.96;
+GRM_GI.GRMVer = 1.972;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
