@@ -1,4 +1,10 @@
 
+
+**RELEASE Ver. 1.19 - April 29th, 2023**
+
+* Slightly updated the version check with GRM.
+
+
 **RELEASE Ver. 1.18 - April 17th, 2023**
 
 * Fixed Lua error that could occur when joining a guild, whilst in party with someone from the guild you are joining... the first trigger of the "GuildData" would not yet be available as you would still be configuring the guild the first time. Now it will wait until data is ready.
