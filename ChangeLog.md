@@ -1,5 +1,12 @@
 
 
+**RELEASE Ver. 1.20 - May 2nd, 2023**
+
+* Compatibility update for Retail 10.1 launch.
+
+* Lua error would occur when in some raid groups. Didn't break anything, but the Lua error was there, which is annoying, so this is resolved now.
+
+
 **RELEASE Ver. 1.19 - April 29th, 2023**
 
 * Slightly updated the version check with GRM.

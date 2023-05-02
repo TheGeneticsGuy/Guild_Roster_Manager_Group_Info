@@ -1003,8 +1003,10 @@ GRM_GI.HideAllIcons = function()
     for i = 1 , #buttons do
         if i < 5 then
             for j = 1 , #buttons[i] do
-                buttons[i][j][1]["raidTradeDistanceIconBorder" .. j]:Hide();
-                buttons[i][j][1]["raidTradeDistanceIcon" .. j]:Hide();
+                if buttons[i][j][1] then
+                    buttons[i][j][1]["raidTradeDistanceIconBorder" .. j]:Hide();
+                    buttons[i][j][1]["raidTradeDistanceIcon" .. j]:Hide();
+                end
             end
         else
             for j = 1 , #buttons[i] do
