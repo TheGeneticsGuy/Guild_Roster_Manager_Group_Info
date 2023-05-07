@@ -1,5 +1,9 @@
 
 
+**RELEASE Ver 1.21 - May 7th, 2023**
+
+* Lua error resolved as well as version check with GRM should no longer tell you this is outdated.
+
 **RELEASE Ver. 1.20 - May 2nd, 2023**
 
 * Compatibility update for Retail 10.1 launch.
