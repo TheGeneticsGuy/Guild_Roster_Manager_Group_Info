@@ -16,7 +16,7 @@ GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
 -- Version
-GRM_GI.version = 1.21;
+GRM_GI.version = 1.23;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
@@ -141,6 +141,11 @@ end
 -- Purpose:         Useful to grab so you can know if the player you are grouped with has alts still in the guild.
 GRM_GI.GetAltNames = function ( listOfAlts )
     local alts = {};
+    
+    if not listOfAlts then
+        return alts;
+    end
+
     local guildData = GRM.GetGuild();
 
     for i = 1 , #listOfAlts do
@@ -346,8 +351,8 @@ GRMGI_UI.LocalizeButtonFrame = function ()
     if GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons ~= nil then
         for i = 1 , #GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons do
 
-            for j = 2 , #GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i] do
-                GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i][j]:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 11 );
+            if GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i][2] then
+                GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i][2]:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 11 );
             end
         end
     end
@@ -355,9 +360,10 @@ GRMGI_UI.LocalizeButtonFrame = function ()
     if GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons ~= nil then
         for i = 1 , #GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons do
 
-            for j = 2 , #GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[i] do
-                GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[i][j]:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 11 );
+            if GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[i][2] then
+                GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[i][2]:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 11 );
             end
+
         end
     end
 
@@ -787,7 +793,7 @@ GRM_GI.BuildMemberTooltip = function ( button , ind )
     GameTooltip:AddLine ( " " );
 
     GameTooltip:AddLine ( GRM.L ( "{custom1} to open Player Window" , nil , nil , nil , "|CFFE6CC7F" .. GRM.L ( "Ctrl-Click" ) .. "|r" ) );
-    GameTooltip:AddLine ( GRM.L ( "|CFFE6CC7FCtrl-Shift-Click|r to Search the Log for Player" ) );
+    GameTooltip:AddLine ( GRM.L ( "{custom1} to Search the Log for Player" , nil , nil , nil , "|CFFE6CC7F" .. GRM.L ( "Ctrl-Shift-Click" ) .. "|r" ) );
 
     GameTooltip:Show();
 end
@@ -856,7 +862,7 @@ GRM_GI.BuildFormerMemberTooltip = function ( button , ind )
         GameTooltip:AddLine ( " " );
     end
 
-    GameTooltip:AddLine ( GRM.L ( "|CFFE6CC7FCtrl-Shift-Click|r to Search the Log for Player" ) );
+    GameTooltip:AddLine ( GRM.L ( "{custom1} to Search the Log for Player" , nil , nil , nil , "|CFFE6CC7F" .. GRM.L ( "Ctrl-Shift-Click" ) .. "|r" ) );
     GameTooltip:Show();
 
 end
@@ -1216,7 +1222,7 @@ GRM_GI.EstablishGroupIcons = function()
             end
 
         else
-            if #GRM_GI.partyIcons < 4 then
+            if #GRM_GI.partyIcons < 4 and _G["PartyFrame"] ~= nil then
                 for i = 1 , 4 do
                     button = _G["PartyFrame"]["MemberFrame" .. i];
                     if button ~= nil then

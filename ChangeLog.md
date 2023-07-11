@@ -1,4 +1,8 @@
+**RELEASE Ver 1.23 - May 7th, 2023**
 
+* Fixed missing localization error that would spam your chat on mouseover of player name.
+
+* Fixed a couple of lua errors that could occur.
 
 **RELEASE Ver 1.21 - May 7th, 2023**
 
