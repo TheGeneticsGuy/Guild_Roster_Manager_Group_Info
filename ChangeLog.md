@@ -1,3 +1,7 @@
+**RELEASE Ver 1.24 - August 14th, 2023**
+
+* Group info was throwing some annoying Lua errors. They weren't addon breaking, but they were needless.
+
 **RELEASE Ver 1.23 - May 7th, 2023**
 
 * Fixed missing localization error that would spam your chat on mouseover of player name.

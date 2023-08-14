@@ -16,7 +16,7 @@ GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
 -- Version
-GRM_GI.version = 1.23;
+GRM_GI.version = 1.24;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
@@ -1939,7 +1939,6 @@ GRM_UI.LoadGroupInfoOptions = function()
                     GRM_GI.HideAllIcons();
                 end
                 GRM_UI.ConfigureGroupInfoRules();
-                GRM.SyncSettings();
             end
         end);
 
@@ -1957,7 +1956,6 @@ GRM_UI.LoadGroupInfoOptions = function()
                     GRM.S().GIModule.InteractDistanceIndicator = false;
                 end
                 GRM_UI.ConfigureGroupInfoRules();
-                GRM.SyncSettings();
             end
         end);
 
@@ -2017,7 +2015,6 @@ GRM_UI.LoadGroupInfoOptions = function()
                 GRM.S().GIModule.DisableGroupInfoTooltip = false;
             end
             GRM_UI.ConfigureGroupInfoRules();
-            GRM.SyncSettings();
         end
     end);
 
