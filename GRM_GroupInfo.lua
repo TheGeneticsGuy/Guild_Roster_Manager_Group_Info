@@ -16,7 +16,7 @@ GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
 -- Version
-GRM_GI.version = 1.24;
+GRM_GI.version = 1.25;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
@@ -1750,12 +1750,14 @@ GRMGI_UI.InitializeUIFrames = function()
     end);
 
     GRMGI_UI.GRM_GroupButtonFrame:SetScript ( "OnKeyDown" , function ( self , key )
-        self:SetPropagateKeyboardInput ( true );
-        if key == "ESCAPE" then
-            self:SetPropagateKeyboardInput ( false );
-            self:Hide();
-            GRMGI_UI.GRM_GroupButtonFrame.GRM_GroupButtonFrameCloseButton:Hide();
-            GRM_GI.lock = false;
+        if not GRM_G.inCombat then
+            self:SetPropagateKeyboardInput ( true );
+            if key == "ESCAPE" then
+                self:SetPropagateKeyboardInput ( false );
+                self:Hide();
+                GRMGI_UI.GRM_GroupButtonFrame.GRM_GroupButtonFrameCloseButton:Hide();
+                GRM_GI.lock = false;
+            end
         end
     end);
     
