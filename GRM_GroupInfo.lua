@@ -16,7 +16,7 @@ GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
 -- Version
-GRM_GI.version = 1.25;
+GRM_GI.version = 1.26;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
@@ -157,7 +157,7 @@ GRM_GI.GetAltNames = function ( listOfAlts )
             alts[ listOfAlts[i][1] ].currentMember = false;
         end
 
-        alts[ listOfAlts[i][1] ].hexCode = GRM.rgbToHex ( { GRM.ConvertRGBScale ( listOfAlts[i][2] , true ) , GRM.ConvertRGBScale ( listOfAlts[i][3] , true ) , GRM.ConvertRGBScale ( listOfAlts[i][4] , true ) } );
+        alts[ listOfAlts[i][1] ].hexCode = GRM.GetClassColorRGB ( listOfAlts[i][2] , true );
 
     end
 
@@ -180,7 +180,7 @@ GRM_GI.IsPlayerFormerMemberByGUID = function ( guid )
 
                 if player.GUID ~= "" and player.GUID == guid then
                     result = true;
-                    playerInfo = { player.bannedInfo[1] , player.bannedInfo[2] , player.reasonBanned , player.name , player.alts , player.isMain , GRM.FormatTimeStamp ( { player.joinDateHist[1][1] , player.joinDateHist[1][2] , player.joinDateHist[1][3] } ) }; -- [1] = isBanned = true/false ; [2] = dateBannedEpoch
+                    playerInfo = { player.bannedInfo[1] , player.bannedInfo[2] , player.reasonBanned , player.name , player.altsAtTimeOfLeaving , player.isMain , GRM.FormatTimeStamp ( { player.joinDateHist[1][1] , player.joinDateHist[1][2] , player.joinDateHist[1][3] } ) , player.mainAtTimeOfLeaving }; -- [1] = isBanned = true/false ; [2] = dateBannedEpoch
                     break;
                 end
 
@@ -224,7 +224,7 @@ GRM_GI.UpdateGroupInfo = function( forcedFullRefresh )
     local name , unit = "" , "";
     local tempListNames = {};
 
-    if guildData then
+    if guildData and guildData[GRM_G.addonUser] ~= nil and guildData[GRM_G.addonUser].GUID ~= nil then
 
         for i = 1 , n do
             unit = group .. i;
@@ -277,17 +277,23 @@ GRM_GI.UpdateGroupInfo = function( forcedFullRefresh )
                     GRM_G.GroupInfo[ player ].isFormerGuildie = true;
                     GRM_G.GroupInfo[ player ].dateLeft = GRM.FormatTimeStamp ( { formerMemberData[ player ].joinDateHist[1][1] , formerMemberData[ player ].joinDateHist[1][2] , formerMemberData[ player ].joinDateHist[1][3] } )
                     GRM_G.GroupInfo[ player ].isBanned = { formerMemberData[ player ].bannedInfo[1] , formerMemberData[ player ].bannedInfo[2] , formerMemberData[ player ].reasonBanned , "" };
-                    GRM_G.GroupInfo[ player ].alts = GRM_GI.GetAltNames ( formerMemberData[ player ].alts );
+                    GRM_G.GroupInfo[ player ].alts = GRM_GI.GetAltNames ( formerMemberData[ player ].altsAtTimeOfLeaving );
                     GRM_G.GroupInfo[ player ].isMain = formerMemberData[ player ].isMain;
                     GRM_G.GroupInfo[ player ].main = {};
                     GRM_G.GroupInfo[ player ].connectedRealm = true;
 
-                    if not GRM_G.GroupInfo[ player ].isMain and #formerMemberData[ player ].alts > 0 then
-                        for i = 1 , #formerMemberData[ player ].alts do
-                            if formerMemberData[ player ].alts[i][5] then
-                                GRM_G.GroupInfo[ player ].main = formerMemberData[ player ].alts[i];
-                                break;
+                    if not GRM_G.GroupInfo[ player ].isMain and #formerMemberData[ player ].altsAtTimeOfLeaving > 0 then
+                        if #formerMemberData[ player ].mainAtTimeOfLeaving > 0 then
+                            GRM_G.GroupInfo[ player ].main = { formerMemberData[ player ].mainAtTimeOfLeaving[1] };
+
+                            if formerMemberData[ player ].mainAtTimeOfLeaving[3] ~= nil then
+                                table.insert ( GRM_G.GroupInfo[ player ].main , GRM.GetClassColorRGB ( formerMemberData[ player ].mainAtTimeOfLeaving[3] , true ) );
+                            else
+                                -- Placeholder for old DB since never stored this info.
+                                -- Just use generic class
+                                table.insert ( GRM_G.GroupInfo[ player ].main , "|C"..RAID_CLASS_COLORS["WARRIOR"].colorStr );
                             end
+
                         end
                     end
 
@@ -305,12 +311,18 @@ GRM_GI.UpdateGroupInfo = function( forcedFullRefresh )
                         GRM_G.GroupInfo[ player ].main = {};
                         GRM_G.GroupInfo[ player ].connectedRealm = true;
 
-                        if not GRM_G.GroupInfo[ player ].isMain and #playerInfo[5] > 0 then
-                            for i = 1 , #playerInfo[5] do
-                                if playerInfo[5][i][5] then
-                                    GRM_G.GroupInfo[ player ].main = playerInfo[5][i];
-                                    break;
+                        if not GRM_G.GroupInfo[ player ].isMain and #GRM_G.GroupInfo[ player ].alts > 0 then
+                            if #playerInfo[7] > 0 then
+                                GRM_G.GroupInfo[ player ].main = { playerInfo[7][1] };
+
+                                if playerInfo[7][3] ~= nil then
+                                    table.insert ( GRM_G.GroupInfo[ player ].main , GRM.GetClassColorRGB ( playerInfo[7][3] , true ) );
+                                else
+                                    -- Placeholder for old DB since never stored this info.
+                                    -- Just use generic class
+                                    table.insert ( GRM_G.GroupInfo[ player ].main , "|C"..RAID_CLASS_COLORS["WARRIOR"].colorStr );
                                 end
+                                
                             end
                         end
 
@@ -436,7 +448,7 @@ GRM_GI.SetValueButtonFrame = function ( type , buttonDetails , sizeBiggest )
                 name2 = GRM.SlimName ( name2 );
             end
 
-            name = name .. altTag .. ( GRM.rgbToHex ( { GRM.ConvertRGBScale ( player.main[2] , true ) , GRM.ConvertRGBScale ( player.main[3] , true ) , GRM.ConvertRGBScale ( player.main[4] , true ) } ) ) .. " " .. name2 .. "|r" .. mainTag;
+            name = name .. altTag .. player.main[2] .. " " .. name2 .. "|r" .. mainTag;
         end
 
         if numAltsStillInGuild > 0 then

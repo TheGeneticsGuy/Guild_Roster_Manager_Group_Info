@@ -1,4 +1,8 @@
 
+**RELEASE Ver 1.26 - October 1st, 2023**
+
+* Group Info was still pointing at the old alt lists of former guildies if grouped with them. Updated the formatting so it was looking at the new DB format and eliminated the lua errors as a result.
+
 **RELEASE Ver 1.25 - September 5th, 2023**
 
 * Fixed a "taint" bug that could occur if a player presses the ESCAPE key to hide the window. This is normally not an issue, but if you were in combat when it occurred, it introduced taint and could block actions. This will no longer happen.
