@@ -16,7 +16,7 @@ GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
 -- Version
-GRM_GI.version = 1.26;
+GRM_GI.version = 1.27;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
@@ -1612,7 +1612,6 @@ GRM_GI.SetGroupInfoButtonPosition = function()
     end
 end
 
-
 -- UI SETTINGS!!!
 
 GRMGI_UI.GRM_GroupRulesButton = CreateFrame( "Button" , "GRM_GroupRulesButton" , UIParent , "UIPanelButtonTemplate" );
@@ -1770,6 +1769,10 @@ GRMGI_UI.InitializeUIFrames = function()
                 GRMGI_UI.GRM_GroupButtonFrame.GRM_GroupButtonFrameCloseButton:Hide();
                 GRM_GI.lock = false;
             end
+        elseif key == "ESCAPE" then
+            self:Hide();
+            GRMGI_UI.GRM_GroupButtonFrame.GRM_GroupButtonFrameCloseButton:Hide();
+            GRM_GI.lock = false;
         end
     end);
     

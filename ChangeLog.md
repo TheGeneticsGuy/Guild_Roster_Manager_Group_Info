@@ -1,4 +1,14 @@
 
+**RELEASE Ver 1.27 - November 7th, 2023**
+
+*Compatibility update for DF 10.2*
+
+*Compatibility update for Wrath Claassic 3.4.3*
+
+***BUG FIXES***
+
+* Fixed an issue due to some changes in the 10.1.7 backend that could throw a "taint" error when in combat, preeventing you from using ESC key to close the GINFO window.
+
 **RELEASE Ver 1.26 - October 1st, 2023**
 
 * Group Info was still pointing at the old alt lists of former guildies if grouped with them. Updated the formatting so it was looking at the new DB format and eliminated the lua errors as a result.
