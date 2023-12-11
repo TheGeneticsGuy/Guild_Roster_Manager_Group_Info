@@ -1,4 +1,10 @@
 
+
+**RELEASE Ver 1.28 - December 11th, 2023**
+
+* Removal of all code relating to the interact distance as Blizz has removed the ability of addons to call this API without throwing errors. It was mostly a redundant feature anyway. Icons will no longer appear on frames showing you are within interact distance for things like trading.
+
+
 **RELEASE Ver 1.27 - November 7th, 2023**
 
 *Compatibility update for DF 10.2*
