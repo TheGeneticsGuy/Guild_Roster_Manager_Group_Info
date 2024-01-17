@@ -1,4 +1,8 @@
 
+**RELEASE Ver 1.29 - January 16th 2024**
+
+* Compatibility release for 10.2.5
+
 
 **RELEASE Ver 1.28 - December 11th, 2023**
 
