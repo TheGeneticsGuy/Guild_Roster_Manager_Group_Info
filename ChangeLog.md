@@ -1,4 +1,8 @@
 
+**RELEASE Ver 1.30 - February 26th, 2024**
+
+* Added compatibility to the "Class Colors" addon
+
 **RELEASE Ver 1.29 - January 16th 2024**
 
 * Compatibility release for 10.2.5

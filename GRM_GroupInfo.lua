@@ -274,7 +274,7 @@ GRM_GI.UpdateGroupInfo = function( forcedFullRefresh )
                             else
                                 -- Placeholder for old DB since never stored this info.
                                 -- Just use generic class
-                                table.insert ( GRM_G.GroupInfo[ player ].main , "|C"..RAID_CLASS_COLORS["WARRIOR"].colorStr );
+                                table.insert ( GRM_G.GroupInfo[ player ].main , "|C"..(CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)["WARRIOR"].colorStr );
                             end
 
                         end
@@ -303,7 +303,7 @@ GRM_GI.UpdateGroupInfo = function( forcedFullRefresh )
                                 else
                                     -- Placeholder for old DB since never stored this info.
                                     -- Just use generic class
-                                    table.insert ( GRM_G.GroupInfo[ player ].main , "|C"..RAID_CLASS_COLORS["WARRIOR"].colorStr );
+                                    table.insert ( GRM_G.GroupInfo[ player ].main , "|C"..(CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)["WARRIOR"].colorStr );
                                 end
                                 
                             end
