@@ -1,4 +1,8 @@
 
+**RELEASE Ver 1.31 - March 3rd, 2024**
+
+* Minor version fix.
+
 **RELEASE Ver 1.30 - February 26th, 2024**
 
 * Added compatibility to the "Class Colors" addon
