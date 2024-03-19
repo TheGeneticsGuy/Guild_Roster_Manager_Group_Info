@@ -1,4 +1,9 @@
 
+**RELEASE Ver 1.32 - March 19th, 2024**
+
+* 10.2.6 compatibility Release
+
+
 **RELEASE Ver 1.31 - March 3rd, 2024**
 
 * Minor version fix.
