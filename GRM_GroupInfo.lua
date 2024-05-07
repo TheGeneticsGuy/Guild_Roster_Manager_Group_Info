@@ -16,7 +16,7 @@ GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
 -- Version
-GRM_GI.version = 1.32;
+GRM_GI.version = 1.36;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
@@ -885,7 +885,7 @@ GRM_GI.UpgradeAnnounceMessage = function()
             local GRMVersion = tonumber ( string.match ( GRM_G.Version , "R(.+)" ) );
             local message = "Group Info Module is Outdated."
 
-            if GRMVersion > 1.96 then       -- Localization file didn't exist until 1.97
+            if GRMVersion > 1.96 then       -- Localization file didn't exist until 1.97 -- Needed to update to bring consistent.
                 print ( GRM.L ( "GRM:" ) .. " " .. GRM.L ( message ) );
             else
                 print ( "GRM: " .. message );

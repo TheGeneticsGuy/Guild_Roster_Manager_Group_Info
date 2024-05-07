@@ -1,3 +1,18 @@
+**RELEASE Ver 1.36 - May 7th, 2024**
+
+* 10.2.7 Compatibility Release
+
+**RELEASE Ver 1.35 - May 2nd, 2024**
+
+* Cata Prepatch compatibility Release
+
+**RELEASE Ver 1.34 - April 18th, 2024**
+
+* Fixed issue where the versions were not aligning with the core addon.
+
+**RELEASE Ver 1.33 - April 5th, 2024**
+
+* 1.15.2 Classic Era SOD Season 3 compatibility release.
 
 **RELEASE Ver 1.32 - March 19th, 2024**
 
