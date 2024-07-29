@@ -1,3 +1,7 @@
+**RELEASE Ver 1.37 - July 29th, 2024**
+
+* 11.0 Compatibility release, and updated with all versions
+
 **RELEASE Ver 1.36 - May 7th, 2024**
 
 * 10.2.7 Compatibility Release
