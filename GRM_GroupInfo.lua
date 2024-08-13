@@ -16,7 +16,7 @@ GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
 -- Version
-GRM_GI.version = 1.37;
+GRM_GI.version = 1.38;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
@@ -38,7 +38,7 @@ GRM_GI.GetNumGroupMembersAndStatusDetails = function()
 
     local serverString = "-" .. GRM_G.realmName;
     local connectedRealms = GRM.GetAllConnectedRealms();
-    
+
     for name , member in pairs ( GRM_G.GroupInfo ) do
 
         if member.isGuildie then
@@ -109,7 +109,7 @@ GRM_GI.GetUnitFullName = function ( groupName )
     if name == nil then
         return nil;
     end
-    
+
     if server ~= nil and server ~= "" then
         name = name .. "-" .. server;
     else
@@ -124,7 +124,7 @@ end
 -- Purpose:         Useful to grab so you can know if the player you are grouped with has alts still in the guild.
 GRM_GI.GetAltNames = function ( listOfAlts )
     local alts = {};
-    
+
     if not listOfAlts then
         return alts;
     end
@@ -305,7 +305,7 @@ GRM_GI.UpdateGroupInfo = function( forcedFullRefresh )
                                     -- Just use generic class
                                     table.insert ( GRM_G.GroupInfo[ player ].main , "|C"..(CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)["WARRIOR"].colorStr );
                                 end
-                                
+
                             end
                         end
 
@@ -370,7 +370,7 @@ GRM_GI.ReconfigureWidths = function ( width )
     if width < GRMGI_UI.GRM_GroupButtonFrame.TextFromServer:GetWidth() then
         width = GRMGI_UI.GRM_GroupButtonFrame.TextFromServer:GetWidth() + 5;
     end
-    
+
     if GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons ~= nil then
         for i = 1 , #GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons do
             GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i][1]:SetWidth ( width + 5 );
@@ -418,7 +418,7 @@ GRM_GI.SetValueButtonFrame = function ( type , buttonDetails , sizeBiggest )
             name = name .. mainTag;
 
         elseif #player.main > 0 then
-            name2 = player.main[1] 
+            name2 = player.main[1]
             if ( not isMergedRealm or GRM_G.BuildVersion < 20000 ) then
                 name2 = GRM.SlimName ( name2 );
             end
@@ -436,7 +436,7 @@ GRM_GI.SetValueButtonFrame = function ( type , buttonDetails , sizeBiggest )
 
         if player.isBanned[1] then
             name = name .. " |r - |CFFFF0000(" .. GRM.L ( "Banned" ) .. ")";
-        end 
+        end
         GRMGI_UI.GRM_GroupButtonFrame.GroupFrameFontStringTest:SetText ( name );
         buttonDetails[2]:SetText ( name );
         buttonDetails[3]:SetText ( player.dateLeft );
@@ -472,7 +472,7 @@ GRM_GI.BuildGroupButtonFrame = function()
     local minWidth = width - 10;
     local maxWidth = 0;
     local i , j , x = 0 , 0 , 0;
-    
+
     local isAtLeastOne = function()
         if ( sameServer + currMembers + formerMembers ) > 0 then
             return true;
@@ -534,7 +534,7 @@ GRM_GI.BuildGroupButtonFrame = function()
                     end
                 end
             end);
-            
+
         end
 
         if i == 1 then
@@ -647,49 +647,49 @@ GRM_GI.BuildGroupButtonFrame = function()
 
         for _ , player in pairs ( serverMembers ) do
             x = x + 1;
-        
+
             -- Build the guildie frames.
             if not GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x] then
                 local tempButton = CreateFrame ( "Button" , "GRM_GroupInfoFormerMemberButton" .. x , GRMGI_UI.GRM_GroupButtonFrame );
 
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x] = { tempButton , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) };
-        
+
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetSize ( minWidth , 15 );
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetHighlightTexture ( "Interface\\Buttons\\UI-Panel-Button-Highlight" );
-        
+
                 if x == 1 then
                     GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetPoint ( "TOPLEFT" , GRMGI_UI.GRM_GroupButtonFrame.TextFromServer , "BOTTOMLEFT" , 0 , -1 );
                 else
                     GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetPoint ( "TOPLEFT" , GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x - 1][1] , "BOTTOMLEFT" );
                 end
-        
+
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][2]:SetJustifyH ( "LEFT" );
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][2]:SetPoint ( "LEFT" , GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1] , "LEFT" , 5 , 0 );
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][2]:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 11 );
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][3]:SetWidth ( 95 );
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][3]:SetJustifyH ( "CENTER" );
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][3]:SetPoint ( "LEFT" , GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1] , "RIGHT" );
-        
+
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetScript ( "OnEnter" , function ( self )
                     GRM_GI.BuildServerMemberTooltip( self , x );
                 end);
-    
+
                 GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetScript ( "OnLeave" , function ()
                     GRM_UI.RestoreTooltipScale();
                     GameTooltip:Hide();
                 end);
 
             end
-        
+
             if x == 1 then
                 height = height + 1;
             end
             height = height + GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:GetHeight();
             GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1].player = player;
-        
+
             maxWidth = GRM_GI.SetValueButtonFrame ( "serverMembers" , GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x] , maxWidth );
         end
-        
+
         -- Hide unused buttons...
         for k = x + 1 , #GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons do
             GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[k][1].player = nil;
@@ -697,13 +697,13 @@ GRM_GI.BuildGroupButtonFrame = function()
         end
 
     end
-   
+
     if maxWidth > minWidth then
         width = maxWidth;
     else
         width = minWidth;
     end
-    
+
     GRM_GI.ReconfigureWidths ( width );
     if isAtLeastOne() then
         if formerMembers > 0 then
@@ -810,7 +810,7 @@ GRM_GI.GroupCheckRepeatControl = function ( count )
     count = count + 1;
 
     if count < 4 then
-        
+
         C_Timer.After ( 1 , function()
             GRM_GI.GroupCheckRepeatControl ( count );
         end);
@@ -825,7 +825,7 @@ GRM_GI.EventListener = function()
 
     -- Sometimes there is a delay with the server, so we are going to trigger it 3 times to check
     if ( time() - GRM_G.StatusChecking.Timer ) >= 3.1 then
-        
+
         C_Timer.After ( 1 , function()
             GRM_GI.GroupCheckRepeatControl ( 1 );
         end);
@@ -897,11 +897,11 @@ end
 -- Method:          GRM_GI.LoadGroupInfoModuleSettings()
 -- What it Does:    Loads this module's settings, first by not loading until the core addon is loaded.
 -- Purpose:         Control actions as needed. Only load as needed
---                  Note: This is kept in the global GRM_G table so it can be accessed from the core GRM to reload if a player leaves a guild and 
+--                  Note: This is kept in the global GRM_G table so it can be accessed from the core GRM to reload if a player leaves a guild and
 --                  ultimately rejoins a guild. Thus it will disable, restart fresh, and re-enable the next time it groups up.
 GRM_GI.LoadGroupInfoModuleSettings = function()
     -- Make sure not to load this addon until the game DB is built first.
-    
+
     if GRM_G.OnFirstLoad or not IsInGuild() then
         GRM_GI.DelayCheck();
         return;
@@ -951,7 +951,7 @@ GRM_GI.GetCustomUIButtonName = function ( buttonName , j , special )
             elseif j < 41 then
                 group = 8;
             end
-        
+
             result = string.gsub ( string.gsub ( result , "XX" , group ) , "YY" , special );
 
         else
@@ -1036,7 +1036,7 @@ GRMGI_UI.GroupInfoButtonInit = function()
     if not GRM_GroupInfo_Save[GRM_G.addonUser].raid then
         updateAddonWithMultiplePositions();
     end
-    
+
     if IsInRaid() then
         GRM_GI.CustomButtonPosition = GRM_GroupInfo_Save[GRM_G.addonUser].raid;
     else
@@ -1123,7 +1123,7 @@ GRMGI_UI.InitializeUIFrames = function()
             GRM_GI.lock = false;
         end
     end);
-    
+
     GRMGI_UI.GRM_GroupButtonFrame.TextTitle:SetPoint ( "TOP" , GRMGI_UI.GRM_GroupButtonFrame , "TOP" , 0 , -15 );
     GRMGI_UI.GRM_GroupButtonFrame.TextTitle:SetTextColor ( 0 , 0.8 , 1 );
     GRMGI_UI.GRM_GroupButtonFrame.TextTotal:SetPoint ( "TOPLEFT" , GRMGI_UI.GRM_GroupButtonFrame , "TOPLEFT" , 15 , -33 );
@@ -1131,16 +1131,16 @@ GRMGI_UI.InitializeUIFrames = function()
     GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembers:SetWidth ( 200 );
     GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembers:SetWordWrap ( false );
     GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembers:SetJustifyH ( "LEFT" );
-    GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembersDateLeft:SetJustifyH ( "CENTER" );    
+    GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembersDateLeft:SetJustifyH ( "CENTER" );
     GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembersDateLeft:SetWidth ( 100 );
     GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembersDateLeft:SetWordWrap ( false );
-    
+
     if GRM_G.BuildVersion >= 20000 then
         GRMGI_UI.GRM_GroupButtonFrame.TextFromServer:SetPoint ( "TOPLEFT" , GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembers , "BOTTOMLEFT" , -5 , - 10 );
     else
         GRMGI_UI.GRM_GroupButtonFrame.TextFromServer:Hide();
     end
-    
+
     GRMGI_UI.GRM_GroupRulesButton:SetScript ( "OnEnter" , function ( self )
         if not GRMGI_UI.GRM_GroupButtonFrame:IsVisible() then
             GRM_GI.BuildGroupButtonFrame ();
@@ -1206,10 +1206,10 @@ GRMGI_UI.InitializeUIFrames = function()
             GameTooltip:Hide();
         end
     end);
-    
+
     GRMGI_UI.GRM_GroupRulesButton:SetScript ( "OnDragStop" , function ( self )
         self:StopMovingOrSizing();
-        
+
         local side1, _ , side2 , point1 , point2 = GRMGI_UI.GRM_GroupRulesButton:GetPoint();
         GRM_GI.CustomButtonPosition = { side1 , side2 , point1 , point2 };
         GRMGI_UI.SetSavePosition ( side1 , side2 , point1 , point2 );
@@ -1257,7 +1257,7 @@ GRM_UI.InitializeLocalizations = function()
     GRMGI_UI.GRM_GroupButtonFrame.TextTotal:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 11 );
     GRMGI_UI.GRM_GroupButtonFrame.TextMembers:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 11 );
     GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembers:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 11 );
-    
+
     GRMGI_UI.GRM_GroupButtonFrame.TextFromServer:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 11 );
 
     GRMGI_UI.GRM_GroupButtonFrame.GroupFrameFontStringTest:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 11 );
@@ -1278,13 +1278,13 @@ GRM_UI.LoadGroupInfoOptions = function()
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.Header = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame:CreateFontString ( nil , "OVERLAY" , "GameFontNormal" );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.Header:SetPoint ( "TOPLEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame , 18 , - 12 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.Header:SetTextColor ( 0.0 , 0.8 , 1.0 , 1.0 );
-        
+
         -- Options Enable/Disable Checkbox
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton = CreateFrame ( "CheckButton" , "GRM_EnableGIModuleCheckButton" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame , GRM_G.CheckButtonTemplate );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButtonText = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton:CreateFontString ( nil , "OVERLAY" , "GameFontNormalSmall" );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton:SetPoint ( "TOPLEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.Header , "BOTTOMLEFT" , -4 , -4 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButtonText:SetPoint ( "LEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton , "RIGHT" , 1 , 0 );
-        
+
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton:SetScript ( "OnClick" , function( self , button )
             if button == "LeftButton" then
                 if self:GetChecked() then
@@ -1303,7 +1303,7 @@ GRM_UI.LoadGroupInfoOptions = function()
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:CreateFontString ( nil , "OVERLAY" , "GameFontNormalSmall" );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:SetPoint ( "TOPLEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton , "BOTTOMLEFT" , 0 , -6 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText:SetPoint ( "LEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton , "RIGHT" , 1 , 0 );
-        
+
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:SetScript ( "OnClick" , function( self , button )
             if button == "LeftButton" then
                 if self:GetChecked() then
