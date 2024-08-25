@@ -1,6 +1,10 @@
+**RELEASE Ver 1.39 - August 13th, 2024**
+
+* Major adaptation release compatible with 1.9911 GRM release. Total database overhaul and handling of alt/main data.
+
 **RELEASE Ver 1.38 - August 13th, 2024**
 
-* 11.0.2 Compatibility release, and updated with all versions
+* 11.0.2 Compatibiity Release
 
 **RELEASE Ver 1.37 - July 29th, 2024**
 

@@ -16,7 +16,7 @@ GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
 -- Version
-GRM_GI.version = 1.38;
+GRM_GI.version = 1.39;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
@@ -1238,8 +1238,6 @@ GRMGI_UI.InitializeUIFrames = function()
 
 end
 
-
-
 -- Method:          GRM_UI.InitializeLocalizations()
 -- What it Does:    Reprocesses all of the fontstrings of this module for localization and font changes
 -- Purpose:         Customization options for the user.
@@ -1280,9 +1278,9 @@ GRM_UI.LoadGroupInfoOptions = function()
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.Header:SetTextColor ( 0.0 , 0.8 , 1.0 , 1.0 );
 
         -- Options Enable/Disable Checkbox
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton = CreateFrame ( "CheckButton" , "GRM_EnableGIModuleCheckButton" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame , GRM_G.CheckButtonTemplate );
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButtonText = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton:CreateFontString ( nil , "OVERLAY" , "GameFontNormalSmall" );
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton = CreateFrame ( "CheckButton" , "GRM_EnableGIModuleCheckButton" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame , "InterfaceOptionsCheckButtonTemplate" );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton:SetPoint ( "TOPLEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.Header , "BOTTOMLEFT" , -4 , -4 );
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButtonText = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton:CreateFontString ( nil , "OVERLAY" , "GameFontNormalSmall" );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButtonText:SetPoint ( "LEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton , "RIGHT" , 1 , 0 );
 
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton:SetScript ( "OnClick" , function( self , button )
@@ -1299,7 +1297,7 @@ GRM_UI.LoadGroupInfoOptions = function()
         end);
 
         -- Options Disable tooltip info
-        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton = CreateFrame ( "CheckButton" , "GRM_DisableGroupInfoTooltipCheckButton" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame , GRM_G.CheckButtonTemplate );
+        GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton = CreateFrame ( "CheckButton" , "GRM_DisableGroupInfoTooltipCheckButton" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame , "InterfaceOptionsCheckButtonTemplate" );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText = GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:CreateFontString ( nil , "OVERLAY" , "GameFontNormalSmall" );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton:SetPoint ( "TOPLEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton , "BOTTOMLEFT" , 0 , -6 );
         GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText:SetPoint ( "LEFT" , GRM_UI.GRM_RosterChangeLogFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton , "RIGHT" , 1 , 0 );
