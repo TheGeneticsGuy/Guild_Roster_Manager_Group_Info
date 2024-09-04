@@ -16,7 +16,7 @@ GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
 -- Version
-GRM_GI.version = 1.39;
+GRM_GI.version = 1.40;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
@@ -37,7 +37,6 @@ GRM_GI.GetNumGroupMembersAndStatusDetails = function()
     local serverMembers = {};
 
     local serverString = "-" .. GRM_G.realmName;
-    local connectedRealms = GRM.GetAllConnectedRealms();
 
     for name , member in pairs ( GRM_G.GroupInfo ) do
 
@@ -50,15 +49,11 @@ GRM_GI.GetNumGroupMembersAndStatusDetails = function()
             formerMembers[name] = member;
         else
 
-            -- Useful to check connected realms, not just your own, so trade considerations can be made.
-            for i = 1 , #connectedRealms do
-                serverString = "-" .. connectedRealms[i];
-                if string.find ( name , serverString , 1 , true ) ~= nil then
-                    member.connectedRealm = true;
-                    sameServer = sameServer + 1;
-                    serverMembers[name] = member;
-                    break;
-                end
+            if string.find ( name , serverString , 1 , true ) ~= nil then
+                member.connectedRealm = true;
+                sameServer = sameServer + 1;
+                serverMembers[name] = member;
+                break;
             end
 
         end
@@ -390,13 +385,12 @@ end
 -- What it Does:    Sets the fontstring values by building the strings and also returns the width of the longest string.
 -- Purpose:         To be able to dynamically build the Group Info frame as the group size changes and modifies.
 GRM_GI.SetValueButtonFrame = function ( type , buttonDetails , sizeBiggest )
-    local isMergedRealm = GRM.IsMergedRealmServer();
     local player = buttonDetails[1].player;
     local name , name2 = "" , "";
     local size = 0;
 
     if type == "guildies" then
-        name = GRM.GetClassColorRGB ( player.class , true ) .. GRM.GetNameWithMainTags ( player.name , ( not isMergedRealm or GRM_G.BuildVersion < 20000 ) , true , true , false ) .. "|r";
+        name = GRM.GetClassColorRGB ( player.class , true ) .. GRM.GetNameWithMainTags ( player.name , false , true , true , false ) .. "|r";
         if player.isBanned[1] then
             name = name .. " |CFFFF0000(" .. GRM.L ( "Banned" ) .. ")";
         end
@@ -404,11 +398,7 @@ GRM_GI.SetValueButtonFrame = function ( type , buttonDetails , sizeBiggest )
         buttonDetails[2]:SetText ( name );
 
     elseif type == "formerGuildies" then
-        if ( not isMergedRealm or GRM_G.BuildVersion < 20000 ) then
-            name = GRM.GetClassColorRGB ( player.class , true ) .. GRM.SlimName ( player.name ) .. "|r";
-        else
-            name = GRM.GetClassColorRGB ( player.class , true ) .. player.name .. "|r";
-        end
+        name = GRM.GetClassColorRGB ( player.class , true ) .. player.name .. "|r";
 
         local mainTag = GRM_G.MainTagHexCode .. GRM.GetMainTags ( false , GRM.S().mainTagIndex ) .. "|r";
         local altTag = GRM_G.MainTagHexCode .. GRM.GetAltTags ( false , GRM.S().mainTagIndex ) .. "|r"
@@ -419,9 +409,6 @@ GRM_GI.SetValueButtonFrame = function ( type , buttonDetails , sizeBiggest )
 
         elseif #player.main > 0 then
             name2 = player.main[1]
-            if ( not isMergedRealm or GRM_G.BuildVersion < 20000 ) then
-                name2 = GRM.SlimName ( name2 );
-            end
 
             name = name .. altTag .. player.main[2] .. " " .. name2 .. "|r" .. mainTag;
         end
@@ -451,6 +438,7 @@ GRM_GI.SetValueButtonFrame = function ( type , buttonDetails , sizeBiggest )
 
     size = GRMGI_UI.GRM_GroupButtonFrame.GroupFrameFontStringTest:GetWidth();
     size = size + 10;   -- for some leeway
+
     if sizeBiggest < size then
         if ( size - sizeBiggest ) < 10 then
             sizeBiggest = sizeBiggest + 10;
@@ -637,65 +625,57 @@ GRM_GI.BuildGroupButtonFrame = function()
         GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembersDateLeft:Hide();
     end
 
-    -- CONNECTED REALM/SERVER MEMBERS
-    if GRM_G.BuildVersion >= 20000 then
-        if not GRM.IsMergedRealmServer() then
-            GRMGI_UI.GRM_GroupButtonFrame.TextFromServer:SetText ( GRM.L ( "Other {name} Members: {num}" , GetRealmName() , nil , red .. sameServer ) );
-        else
-            GRMGI_UI.GRM_GroupButtonFrame.TextFromServer:SetText ( GRM.L ( "Other Connected Realm Members: {num}" , nil , nil , red .. sameServer ) );
-        end
+    GRMGI_UI.GRM_GroupButtonFrame.TextFromServer:SetText ( GRM.L ( "Other {name} Members: {num}" , GetRealmName() , nil , red .. sameServer ) );
 
-        for _ , player in pairs ( serverMembers ) do
-            x = x + 1;
+    for _ , player in pairs ( serverMembers ) do
+        x = x + 1;
 
-            -- Build the guildie frames.
-            if not GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x] then
-                local tempButton = CreateFrame ( "Button" , "GRM_GroupInfoFormerMemberButton" .. x , GRMGI_UI.GRM_GroupButtonFrame );
+        -- Build the guildie frames.
+        if not GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x] then
+            local tempButton = CreateFrame ( "Button" , "GRM_GroupInfoFormerMemberButton" .. x , GRMGI_UI.GRM_GroupButtonFrame );
 
-                GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x] = { tempButton , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) };
+            GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x] = { tempButton , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) };
 
-                GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetSize ( minWidth , 15 );
-                GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetHighlightTexture ( "Interface\\Buttons\\UI-Panel-Button-Highlight" );
-
-                if x == 1 then
-                    GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetPoint ( "TOPLEFT" , GRMGI_UI.GRM_GroupButtonFrame.TextFromServer , "BOTTOMLEFT" , 0 , -1 );
-                else
-                    GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetPoint ( "TOPLEFT" , GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x - 1][1] , "BOTTOMLEFT" );
-                end
-
-                GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][2]:SetJustifyH ( "LEFT" );
-                GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][2]:SetPoint ( "LEFT" , GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1] , "LEFT" , 5 , 0 );
-                GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][2]:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 11 );
-                GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][3]:SetWidth ( 95 );
-                GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][3]:SetJustifyH ( "CENTER" );
-                GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][3]:SetPoint ( "LEFT" , GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1] , "RIGHT" );
-
-                GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetScript ( "OnEnter" , function ( self )
-                    GRM_GI.BuildServerMemberTooltip( self , x );
-                end);
-
-                GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetScript ( "OnLeave" , function ()
-                    GRM_UI.RestoreTooltipScale();
-                    GameTooltip:Hide();
-                end);
-
-            end
+            GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetSize ( minWidth , 15 );
+            GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetHighlightTexture ( "Interface\\Buttons\\UI-Panel-Button-Highlight" );
 
             if x == 1 then
-                height = height + 1;
+                GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetPoint ( "TOPLEFT" , GRMGI_UI.GRM_GroupButtonFrame.TextFromServer , "BOTTOMLEFT" , 0 , -1 );
+            else
+                GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetPoint ( "TOPLEFT" , GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x - 1][1] , "BOTTOMLEFT" );
             end
-            height = height + GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:GetHeight();
-            GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1].player = player;
 
-            maxWidth = GRM_GI.SetValueButtonFrame ( "serverMembers" , GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x] , maxWidth );
+            GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][2]:SetJustifyH ( "LEFT" );
+            GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][2]:SetPoint ( "LEFT" , GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1] , "LEFT" , 5 , 0 );
+            GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][2]:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 11 );
+            GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][3]:SetWidth ( 95 );
+            GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][3]:SetJustifyH ( "CENTER" );
+            GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][3]:SetPoint ( "LEFT" , GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1] , "RIGHT" );
+
+            GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetScript ( "OnEnter" , function ( self )
+                GRM_GI.BuildServerMemberTooltip( self , x );
+            end);
+
+            GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetScript ( "OnLeave" , function ()
+                GRM_UI.RestoreTooltipScale();
+                GameTooltip:Hide();
+            end);
+
         end
 
-        -- Hide unused buttons...
-        for k = x + 1 , #GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons do
-            GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[k][1].player = nil;
-            GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[k][1]:Hide();
+        if x == 1 then
+            height = height + 1;
         end
+        height = height + GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:GetHeight();
+        GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1].player = player;
 
+        maxWidth = GRM_GI.SetValueButtonFrame ( "serverMembers" , GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x] , maxWidth );
+    end
+
+    -- Hide unused buttons...
+    for k = x + 1 , #GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons do
+        GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[k][1].player = nil;
+        GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[k][1]:Hide();
     end
 
     if maxWidth > minWidth then
@@ -710,7 +690,7 @@ GRM_GI.BuildGroupButtonFrame = function()
             width = width + 120;        -- the Date Left fontstring adds and extra 95 width, plus extra for spacing
         end
     end
-    GRMGI_UI.GRM_GroupButtonFrame:SetSize ( width , height );
+    GRMGI_UI.GRM_GroupButtonFrame:SetSize ( width + 25 , height );
     GRMGI_UI.GRM_GroupButtonFrame:Show();
 end
 
@@ -968,16 +948,18 @@ end
 -- What it Does:    Adjusts the position of the button depending on if the raid window is open or not
 -- Purpose:         Flexible adjustment of the location of the GMR Group Info frame
 GRM_GI.SetGroupInfoButtonPosition = function()
-    if GRM.S().GIModule.enabled and IsInGuild() and ( IsInRaid() or GRM_G.InGroup ) and GRM_GI.GetNumGroupMembersAndStatusDetails() > 1 then
+    if GRM.S() and GRM.S().GIModule then
+        if GRM.S().GIModule.enabled and IsInGuild() and ( IsInRaid() or GRM_G.InGroup ) and GRM_GI.GetNumGroupMembersAndStatusDetails() > 1 then
 
-        if not GRMGI_UI.GRM_GroupRulesButton:IsVisible() then
-            GRMGI_UI.GRM_GroupRulesButton:Show();
+            if not GRMGI_UI.GRM_GroupRulesButton:IsVisible() then
+                GRMGI_UI.GRM_GroupRulesButton:Show();
+            end
+
+        else
+            GRM_GI.lock = false;
+            GRMGI_UI.GRM_GroupButtonFrame:Hide();
+            GRMGI_UI.GRM_GroupRulesButton:Hide();
         end
-
-    else
-        GRM_GI.lock = false;
-        GRMGI_UI.GRM_GroupButtonFrame:Hide();
-        GRMGI_UI.GRM_GroupRulesButton:Hide();
     end
 end
 

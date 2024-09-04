@@ -1,6 +1,14 @@
-**RELEASE Ver 1.39 - August 13th, 2024**
+**RELEASE Ver 1.40 - September 4th, 2024**
 
-* Major adaptation release compatible with 1.9911 GRM release. Total database overhaul and handling of alt/main data.
+* Fixed a bug that could occur if settings haven't been loaded yet or they had been reset whilst the button was still visible.
+
+* Fixed a bug regarding the previous update that got rid of some of the logic of dealing with merged realm guilds but I forgot to adapt for this module.
+
+* Fixed an issue where the text was overlapping the right side if you had main/alt tags enabled.
+
+**RELEASE Ver 1.39 - August 25th, 2024**
+
+* Major adaptation release compatible with 1.9912 GRM release. Total database overhaul and handling of alt/main data.
 
 **RELEASE Ver 1.38 - August 13th, 2024**
 
