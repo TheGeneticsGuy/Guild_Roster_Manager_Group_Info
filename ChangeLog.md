@@ -1,3 +1,7 @@
+**RELEASE Ver 1.41 - October 2nd, 2024**
+
+* Updated compatibility for Classic Era 1.15.4 release
+
 **RELEASE Ver 1.40 - September 4th, 2024**
 
 * Fixed a bug that could occur if settings haven't been loaded yet or they had been reset whilst the button was still visible.
