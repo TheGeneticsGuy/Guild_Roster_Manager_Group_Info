@@ -1,3 +1,7 @@
+**RELEASE Ver 1.42 - October 22nd, 2024**
+
+*11.0.5 Compatibility Release - 20th Anniversary*
+
 **RELEASE Ver 1.41 - October 2nd, 2024**
 
 * Updated compatibility for Classic Era 1.15.4 release
