@@ -16,7 +16,7 @@ GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
 -- Version
-GRM_GI.version = 1.44;
+GRM_GI.version = 1.45;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
@@ -158,7 +158,7 @@ GRM_GI.IsPlayerFormerMemberByGUID = function ( guid )
 
                 if player.GUID ~= "" and player.GUID == guid then
                     result = true;
-                    playerInfo = { player.bannedInfo[1] , player.bannedInfo[2] , player.reasonBanned , player.name , player.altsAtTimeOfLeaving , player.isMain , GRM.FormatTimeStamp ( { player.joinDateHist[1][1] , player.joinDateHist[1][2] , player.joinDateHist[1][3] } ) , player.mainAtTimeOfLeaving }; -- [1] = isBanned = true/false ; [2] = dateBannedEpoch
+                    playerInfo = { player.bannedInfo[1] , player.bannedInfo[2] , player.reasonBanned , player.name , player.altsAtTimeOfLeaving , player.isMain , GRM.Time.FormatTimeStamp ( { player.joinDateHist[1][1] , player.joinDateHist[1][2] , player.joinDateHist[1][3] } ) , player.mainAtTimeOfLeaving }; -- [1] = isBanned = true/false ; [2] = dateBannedEpoch
                     break;
                 end
 
@@ -253,7 +253,7 @@ GRM_GI.UpdateGroupInfo = function( forcedFullRefresh )
                 elseif formerMemberData[ player ] ~= nil then
                     GRM_G.GroupInfo[ player ].isGuildie = false;
                     GRM_G.GroupInfo[ player ].isFormerGuildie = true;
-                    GRM_G.GroupInfo[ player ].dateLeft = GRM.FormatTimeStamp ( { formerMemberData[ player ].joinDateHist[1][1] , formerMemberData[ player ].joinDateHist[1][2] , formerMemberData[ player ].joinDateHist[1][3] } )
+                    GRM_G.GroupInfo[ player ].dateLeft = GRM.Time.FormatTimeStamp ( { formerMemberData[ player ].joinDateHist[1][1] , formerMemberData[ player ].joinDateHist[1][2] , formerMemberData[ player ].joinDateHist[1][3] } )
                     GRM_G.GroupInfo[ player ].isBanned = { formerMemberData[ player ].bannedInfo[1] , formerMemberData[ player ].bannedInfo[2] , formerMemberData[ player ].reasonBanned , "" };
                     GRM_G.GroupInfo[ player ].alts = GRM_GI.GetAltNames ( formerMemberData[ player ].altsAtTimeOfLeaving );
                     GRM_G.GroupInfo[ player ].isMain = formerMemberData[ player ].isMain;
