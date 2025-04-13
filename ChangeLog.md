@@ -1,8 +1,8 @@
-**RELEASE Ver 1.45 - February 26th, 2025**
+**RELEASE Ver 1.45 - April 13th, 2025**
 
 ***COMPATIBILITY RELEASE***
 
-* Update for 11.1 Retail, 1.15.6 Classic Era, and 4.4.2 Cata
+* Update for 11.1 Retail, 1.15.7 Classic Era, and 4.4.2 Cata
 
 * Addon will now be sorted in the "Guild" Category of addons.
 
