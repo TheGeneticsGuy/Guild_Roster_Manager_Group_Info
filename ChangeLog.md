@@ -1,9 +1,15 @@
+**RELEASE Ver 1.47 - June 17th, 2025**
+
+***COMPATIBILITY RELEASE***
+
+* Update for 11.1.7 Retail
+
+
 **RELEASE Ver 1.46 - April 22nd, 2025**
 
 ***COMPATIBILITY RELEASE***
 
 * Update for 11.1.5 Retail
-
 
 **RELEASE Ver 1.45 - April 13th, 2025**
 
