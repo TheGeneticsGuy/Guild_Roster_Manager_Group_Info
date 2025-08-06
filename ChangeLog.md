@@ -1,3 +1,9 @@
+**RELEASE Ver 1.49 - August 6th, 2025**
+
+***COMPATIBILITY RELEASE***
+
+* 11.2 Retail update
+
 **RELEASE Ver 1.48 - July 21st, 2025**
 
 ***COMPATIBILITY RELEASE***
