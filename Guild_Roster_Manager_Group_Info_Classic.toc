@@ -2,12 +2,13 @@
 ## Interface: 11507
 
 ## Author: Arkaan
-## Version: 1.49
+## Version: 1.50
 ## Title: Guild Roster Manager - Group Info
 ## Notes: GRM module to inform on players you are grouped with who are guildies or former guildies
 ## X-Website: https://www.curseforge.com/wow/addons/guild-roster-manager-group-info
 ## Category: Guild
 ## RequiredDeps: Guild_Roster_Manager
+## IconTexture: Interface\AddOns\Guild_Roster_Manager_Group_Info\Media\icons\logo_64x64.png
 
 ## SavedVariables: GRM_GroupInfo_Save
 
