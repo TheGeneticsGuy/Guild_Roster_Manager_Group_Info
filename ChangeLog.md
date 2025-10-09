@@ -1,3 +1,7 @@
+**RELEASE Ver 1.51 - October 9th, 2025**
+
+* 11.2.5 Compatibility Update
+
 **RELEASE Ver 1.50 - August 12th, 2025**
 
 * Minor update, just added the GRM logo to the addon manager window.
