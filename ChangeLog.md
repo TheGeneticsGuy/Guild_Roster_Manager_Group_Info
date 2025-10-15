@@ -1,3 +1,7 @@
+**RELEASE Ver 1.52 - October 14th, 2025**
+
+* Fixed the spacing of the Modules Options as the header text for Group Info was misaligned with tabs.
+
 **RELEASE Ver 1.51 - October 9th, 2025**
 
 * 11.2.5 Compatibility Update
