@@ -1,3 +1,7 @@
+**RELEASE Ver 1.53 - October 16th, 2025**
+
+* Updated for MOP Classic 5.5.1 - I didn't realize this had already dropped.
+
 **RELEASE Ver 1.52 - October 14th, 2025**
 
 * Fixed the spacing of the Modules Options as the header text for Group Info was misaligned with tabs.
