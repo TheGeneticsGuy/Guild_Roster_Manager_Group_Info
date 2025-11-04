@@ -1,3 +1,7 @@
+**RELEASE Ver 1.54 - November 4th, 2025**
+
+* Updated for MOP Classic 5.5.2 and 1.15.8 Classic Era
+
 **RELEASE Ver 1.53 - October 16th, 2025**
 
 * Updated for MOP Classic 5.5.1 - I didn't realize this had already dropped.
