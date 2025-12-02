@@ -1,3 +1,7 @@
+**RELEASE Ver 1.55 - December 2nd, 2025**
+
+*Compatibility Release 11.2.7*
+
 **RELEASE Ver 1.54 - November 4th, 2025**
 
 * Updated for MOP Classic 5.5.2 and 1.15.8 Classic Era
