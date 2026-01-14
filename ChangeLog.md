@@ -1,3 +1,7 @@
+**RELEASE Ver 1.57 - January 14th, 2025**
+
+*Compatibility Release TBC Anniversary 2.5.5
+
 **RELEASE Ver 1.56 - December 29th, 2025**
 
 *Compatibility Release for MoP Classic 5.5.3
