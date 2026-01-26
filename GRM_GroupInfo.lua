@@ -16,7 +16,7 @@ GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
 -- Version
-GRM_GI.version = 1.58;
+GRM_GI.version = 1.59;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
@@ -101,7 +101,7 @@ end
 GRM_GI.GetUnitFullName = function ( groupName )
     local name , server = UnitName ( groupName );
 
-    if name == nil then
+    if not name or GRM.issecretvalue(server) then
         return nil;
     end
 

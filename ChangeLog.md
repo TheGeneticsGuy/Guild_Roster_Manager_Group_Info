@@ -1,3 +1,9 @@
+**RELEASE Ver 1.59 - January 26th, 2025**
+
+***BUG FIXES***
+
+* Part of the Addongeddon issue - fixed a bug that could trigger when in a BG or in a raid boss fight.
+
 **RELEASE Ver 1.58 - January 20th, 2025**
 
 *Compatibility Release for Midnight 12.0.0*
