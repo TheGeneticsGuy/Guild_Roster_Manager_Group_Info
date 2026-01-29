@@ -1,14 +1,14 @@
-**RELEASE Ver 1.59 - January 29th, 2025**
+**RELEASE Ver 1.59 - January 29th, 2026**
 
 ***BUG FIXES***
 
 * Part of the Addongeddon issue - fixed a bug that could trigger when in a BG or in a raid boss fight.
 
-**RELEASE Ver 1.58 - January 20th, 2025**
+**RELEASE Ver 1.58 - January 20th, 2026**
 
 *Compatibility Release for Midnight 12.0.0*
 
-**RELEASE Ver 1.57 - January 14th, 2025**
+**RELEASE Ver 1.57 - January 14th, 2026**
 
 *Compatibility Release TBC Anniversary 2.5.5*
 
