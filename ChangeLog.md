@@ -1,4 +1,4 @@
-**RELEASE Ver 1.59 - January 26th, 2025**
+**RELEASE Ver 1.59 - January 29th, 2025**
 
 ***BUG FIXES***
 
