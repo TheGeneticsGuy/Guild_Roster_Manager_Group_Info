@@ -1,3 +1,7 @@
+**RELEASE Ver 1.60 - February 10th, 2026**
+
+*Compatibility Builds with Midnight 12.0.1*
+
 **RELEASE Ver 1.59 - January 29th, 2026**
 
 ***BUG FIXES***
