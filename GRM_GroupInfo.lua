@@ -16,7 +16,7 @@ GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
 -- Version
-GRM_GI.version = 1.60;
+GRM_GI.version = 1.61;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
@@ -209,13 +209,18 @@ GRM_GI.UpdateGroupInfo = function( forcedFullRefresh )
             name = GRM_GI.GetUnitFullName ( unit );
 
             if name then
-                tempListNames[name] = {};
-                tempListNames[name].guid = UnitGUID( unit );
-                tempListNames[name].class = select ( 2 , UnitClass ( unit ) );
-                if name == GRM_G.addonUser then
-                    tempListNames[name].unitID = "self";
+                local guid = UnitGUID( unit );
+                if not GRM.issecretvalue(guid) then
+                    tempListNames[name] = {};
+                    tempListNames[name].guid = guid;
+                    tempListNames[name].class = select ( 2 , UnitClass ( unit ) );
+                    if name == GRM_G.addonUser then
+                        tempListNames[name].unitID = "self";
+                    else
+                        tempListNames[name].unitID = group .. i;
+                    end
                 else
-                    tempListNames[name].unitID = group .. i;
+                    return -- Protected values, just update once no longer protected.
                 end
             end
 
@@ -229,11 +234,9 @@ GRM_GI.UpdateGroupInfo = function( forcedFullRefresh )
 
         -- Now, we do cleanup of names of players no longer in group.
         for player in pairs ( GRM_G.GroupInfo ) do
-
-        if tempListNames [ player ] == nil then
-                GRM_G.GroupInfo [ player ] = nil;
-        end
-
+            if tempListNames [ player ] == nil then
+                    GRM_G.GroupInfo [ player ] = nil;
+            end
         end
 
         -- Now we add new names

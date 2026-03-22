@@ -1,3 +1,10 @@
+**RELEASE Ver 1.61 - February 10th, 2026**
+
+***BUG FIXES***
+
+* Certain API is now restricted in Midnight or produces "secret values" when in certain circumstances, like Raid combat. GRM will now prevent this addon from calling protected API whilst grouped and in combat or in PVP instances, or wherver it applies.
+
+
 **RELEASE Ver 1.60 - February 10th, 2026**
 
 *Compatibility Builds with Midnight 12.0.1*
