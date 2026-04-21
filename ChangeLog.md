@@ -1,3 +1,7 @@
+**RELEASE Ver 1.62 - April 21st, 2026**
+
+*12.0.5 Compatibility for Retail*
+
 **RELEASE Ver 1.61 - February 10th, 2026**
 
 ***BUG FIXES***
