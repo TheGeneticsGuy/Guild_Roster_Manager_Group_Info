@@ -1,3 +1,10 @@
+
+**RELEASE Ver 1.63 - April 21st, 2026**
+
+***BUG FIXES***
+
+* GRM should now show compatibility with 12.0.1 for users who update early before servers drop in EU, due to the mismatched timing on server launching.
+
 **RELEASE Ver 1.62 - April 21st, 2026**
 
 *12.0.5 Compatibility for Retail*
