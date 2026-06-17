@@ -16,7 +16,7 @@ GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
 -- Version
-GRM_GI.version = 1.63;
+GRM_GI.version = 1.64;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
@@ -256,7 +256,13 @@ GRM_GI.UpdateGroupInfo = function( forcedFullRefresh )
                 elseif formerMemberData[ player ] ~= nil then
                     GRM_G.GroupInfo[ player ].isGuildie = false;
                     GRM_G.GroupInfo[ player ].isFormerGuildie = true;
-                    GRM_G.GroupInfo[ player ].dateLeft = GRM.Time.FormatTimeStamp ( { formerMemberData[ player ].joinDateHist[1][1] , formerMemberData[ player ].joinDateHist[1][2] , formerMemberData[ player ].joinDateHist[1][3] } )
+
+                    if formerMemberData[ player ].joinDateHist and formerMemberData[ player ].joinDateHist[1] and formerMemberData[ player ].joinDateHist[1][1] and formerMemberData[ player ].joinDateHist[1][2] and formerMemberData[ player ].joinDateHist[1][3] then
+                        GRM_G.GroupInfo[ player ].dateJoined = GRM.Time.FormatTimeStamp ( { formerMemberData[ player ].joinDateHist[1][1] , formerMemberData[ player ].joinDateHist[1][2] , formerMemberData[ player ].joinDateHist[1][3] } )
+                    else
+                        GRM_G.GroupInfo[ player ].dateJoined = GRM.L( "Unknown" );
+                    end
+
                     GRM_G.GroupInfo[ player ].isBanned = { formerMemberData[ player ].bannedInfo[1] , formerMemberData[ player ].bannedInfo[2] , formerMemberData[ player ].reasonBanned , "" };
                     GRM_G.GroupInfo[ player ].alts = GRM_GI.GetAltNames ( formerMemberData[ player ].altsAtTimeOfLeaving );
                     GRM_G.GroupInfo[ player ].isMain = formerMemberData[ player ].isMain;

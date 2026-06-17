@@ -1,3 +1,10 @@
+**RELEASE Ver 1.64 - June 17th, 2026**
+
+*Compatibility Release for Retail 12.0.7 and Classic MoP 5.5.4*
+
+***BUG FIXES***
+
+* Fixed a bug where the date left the guild was not properly recorded, so when trying to show playuer data it was throwing an error. In these cases the former member data of a person you are grouped with should now state "Unknown."
 
 **RELEASE Ver 1.63 - April 21st, 2026**
 
