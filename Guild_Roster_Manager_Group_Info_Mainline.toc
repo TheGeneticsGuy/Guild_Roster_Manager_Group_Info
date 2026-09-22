@@ -1,4 +1,4 @@
-## Interface: 120100
+## Interface: 120007
 
 ## Author: Arkaan
 ## Version: 1.65

@@ -1,4 +1,4 @@
-**RELEASE Ver 1.64 - April 13th, 2026**
+**RELEASE Ver 1.65 - August 13th, 2026**
 
 *Compatibility Release for Retail 12.1.0 and TBC 2.5.6 and Classic Era 1.15.9*
 
