@@ -807,20 +807,21 @@ GRM_GI.GroupCheckRepeatControl = function ( count )
     end
 end
 
+local StatusCheckingTimer = 0;
 -- Method:          GRM_GI.EventListener()
 -- What it Does:    Listens for the tracked events and initiates the given function
 -- Purpose:         Event listening control
 GRM_GI.EventListener = function()
 
     -- Sometimes there is a delay with the server, so we are going to trigger it 3 times to check
-    if ( time() - GRM_G.StatusCheckingTimer ) >= 3.1 then
+    if ( time() - StatusCheckingTimer ) >= 3.1 then
 
         C_Timer.After ( 1 , function()
             GRM_GI.GroupCheckRepeatControl ( 1 );
         end);
 
         GRMGI_UI.GroupInfoButtonInit();
-        GRM_G.StatusCheckingTimer = time();
+        StatusCheckingTimer = time();
     end
 
 end
