@@ -16,7 +16,7 @@ GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
 -- Version
-GRM_GI.version = 1.64;
+GRM_GI.version = 1.65;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
@@ -813,14 +813,14 @@ end
 GRM_GI.EventListener = function()
 
     -- Sometimes there is a delay with the server, so we are going to trigger it 3 times to check
-    if ( time() - GRM_G.StatusChecking.Timer ) >= 3.1 then
+    if ( time() - GRM_G.StatusCheckingTimer ) >= 3.1 then
 
         C_Timer.After ( 1 , function()
             GRM_GI.GroupCheckRepeatControl ( 1 );
         end);
 
         GRMGI_UI.GroupInfoButtonInit();
-        GRM_G.StatusChecking.Timer = time();
+        GRM_G.StatusCheckingTimer = time();
     end
 
 end
