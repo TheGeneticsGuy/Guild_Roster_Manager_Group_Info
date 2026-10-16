@@ -1127,7 +1127,7 @@ GRMGI_UI.InitializeUIFrames = function()
     GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembersDateLeft:SetWidth ( 100 );
     GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembersDateLeft:SetWordWrap ( false );
 
-    if GRM_G.BuildVersion >= GRM_ENUM.BUILD.CATA then
+    if GRM_G.BuildVersion >= 20000 then
         GRMGI_UI.GRM_GroupButtonFrame.TextFromServer:SetPoint ( "TOPLEFT" , GRMGI_UI.GRM_GroupButtonFrame.TextFormerMembers , "BOTTOMLEFT" , -5 , - 10 );
     else
         GRMGI_UI.GRM_GroupButtonFrame.TextFromServer:Hide();
