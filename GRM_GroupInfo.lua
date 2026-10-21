@@ -1208,20 +1208,6 @@ GRMGI_UI.InitializeUIFrames = function()
         self:SetMovable ( false );
     end)
 
-    GRM_UI.GRM_MemberDetailMetaData.GRM_DayDropDownMenuSelected:SetScript ( "OnEnter" , function( self )
-        if not GRM_UI.GRM_MemberDetailMetaData.GRM_DayDropDownMenu:IsVisible() then
-            GRM_UI.SetTooltipScale()
-            GameTooltip:SetOwner ( self , "ANCHOR_CURSOR" );
-            GameTooltip:AddLine( GRM.L ( "|CFFE6CC7FClick|r to Change Day" ) );
-            GameTooltip:Show();
-        end
-    end);
-
-    GRM_UI.GRM_MemberDetailMetaData.GRM_DayDropDownMenuSelected:SetScript ( "OnLeave" , function()
-        GRM_UI.RestoreTooltipScale();
-        GameTooltip:Hide();
-    end);
-
     GRMGI_UI.GRM_GroupRulesButton:HookScript ( "OnLeave" , GRMGI_UI.GRM_GroupRulesButton:GetScript ( "OnMouseUp"  ) );
 
     if not GRM.S().GIModule.enabled then
