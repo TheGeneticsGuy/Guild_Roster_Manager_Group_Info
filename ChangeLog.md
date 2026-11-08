@@ -1,3 +1,9 @@
+**RELEASE Ver 1.67 - November 8th, 2026**
+
+*Compatibility for the major nicknames overhaul - NOT YET COMPATIBLE WITH WOW FOREVER*
+
+* Fixed a bug where tooltip wasn't working right and was showing the name 1 index off.
+
 **RELEASE Ver 1.66 - October 15th, 2026**
 
 *Compatibility Release for 12.1.5*

@@ -16,7 +16,7 @@ GRM_GI = {};                  -- Module function table
 GRMGI_UI = {};                -- Module UI table
 
 -- Version
-GRM_GI.version = 1.66;
+GRM_GI.version = 1.67;
 GRM_GI.UpgradeAnnounce = false;
 
 -- Global Variables
@@ -395,33 +395,38 @@ end
 -- Purpose:         To be able to dynamically build the Group Info frame as the group size changes and modifies.
 GRM_GI.SetValueButtonFrame = function ( type , buttonDetails , sizeBiggest )
     local player = buttonDetails[1].player;
-    local name , name2 = "" , "";
+    local name = "";
     local size = 0;
 
     if type == "guildies" then
-        name = GRM.GetClassColorRGB ( player.class , true ) .. GRM.GetNameWithMainTags ( player.name , false , true , true , false ) .. "|r";
+        -- This automatically applies Nicknames, Main, and Alt configurations using your new brain!
+        name = GRM_Sys.GetNameWithMainTags(player.name);
+        
         if player.isBanned[1] then
             name = name .. " |CFFFF0000(" .. GRM.L ( "Banned" ) .. ")";
         end
-        GRMGI_UI.GRM_GroupButtonFrame.GroupFrameFontStringTest:SetText ( name );
-        buttonDetails[2]:SetText ( name );
+        
+        GRMGI_UI.GRM_GroupButtonFrame.GroupFrameFontStringTest:SetText(name);
+        buttonDetails[2]:SetText(name);
 
     elseif type == "formerGuildies" then
-        name = GRM.GetClassColorRGB ( player.class , true ) .. player.name .. "|r";
+        
+        -- Because they are no longer in the guild, we construct their name manually using their historical data
+        local toonName = player.name
+        local isMain = player.isMain
+        local mainName = isMain and toonName or (#player.main > 0 and player.main[1] or toonName)
+        local isUnassigned = (not isMain and #player.main == 0)
+        local nickname = GRM.NN.GetNickname(toonName)
 
-        local mainTag = GRM_G.MainTagHexCode .. GRM.GetMainTags ( false , GRM.S().mainTagIndex ) .. "|r";
-        local altTag = GRM_G.MainTagHexCode .. GRM.GetAltTags ( false , GRM.S().mainTagIndex ) .. "|r"
+        -- Route historical data through the universal formatter!
+        name = GRM_Name.GetFormattedNameString(toonName, mainName, nickname, isMain, isUnassigned, nil, false)
+        
+        -- Apply their class color
+        local classHex = GRM.GetClassColorRGB(player.class, true)
+        name = classHex .. name .. "|r"
+
+        -- Append Alts in Guild Info
         local numAltsStillInGuild = GRM_GI.GetNumAltsStillInGuild ( player.alts );
-
-        if player.isMain then
-            name = name .. mainTag;
-
-        elseif #player.main > 0 then
-            name2 = player.main[1]
-
-            name = name .. altTag .. player.main[2] .. " " .. name2 .. "|r" .. mainTag;
-        end
-
         if numAltsStillInGuild > 0 then
             if numAltsStillInGuild == 1 then
                 name = name .. " - " .. GRM.L ( "1 Alt Still in Guild" );
@@ -430,9 +435,11 @@ GRM_GI.SetValueButtonFrame = function ( type , buttonDetails , sizeBiggest )
             end
         end
 
+        -- Append Ban Info
         if player.isBanned[1] then
             name = name .. " |r - |CFFFF0000(" .. GRM.L ( "Banned" ) .. ")";
         end
+        
         GRMGI_UI.GRM_GroupButtonFrame.GroupFrameFontStringTest:SetText ( name );
         buttonDetails[2]:SetText ( name );
         buttonDetails[3]:SetText ( player.dateLeft );
@@ -445,6 +452,7 @@ GRM_GI.SetValueButtonFrame = function ( type , buttonDetails , sizeBiggest )
 
     end
 
+    -- Calculate sizing
     size = GRMGI_UI.GRM_GroupButtonFrame.GroupFrameFontStringTest:GetWidth();
     size = size + 10;   -- for some leeway
 
@@ -490,6 +498,8 @@ GRM_GI.BuildGroupButtonFrame = function()
         if not GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i] then
             local tempButton = CreateFrame ( "Button" , "GRM_GroupInfoButton" .. i , GRMGI_UI.GRM_GroupButtonFrame );
 
+            tempButton.index = i
+
             GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i] = { tempButton , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) };
 
             GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i][1]:SetSize ( minWidth , 15 );
@@ -506,7 +516,7 @@ GRM_GI.BuildGroupButtonFrame = function()
             GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i][2]:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 11 );
 
             GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i][1]:SetScript ( "OnEnter" , function ( self )
-                GRM_GI.BuildMemberTooltip( self , i );
+                GRM_GI.BuildMemberTooltip( self , self.index );
             end);
 
             GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[i][1]:SetScript ( "OnLeave" , function ()
@@ -566,6 +576,8 @@ GRM_GI.BuildGroupButtonFrame = function()
         if not GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[j] then
             local tempButton = CreateFrame ( "Button" , "GRM_GroupInfoFormerMemberButton" .. j , GRMGI_UI.GRM_GroupButtonFrame );
 
+            tempButton.index = j;
+
             GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[j] = { tempButton , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) };
 
             GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[j][1]:SetSize ( minWidth , 15 );
@@ -585,7 +597,7 @@ GRM_GI.BuildGroupButtonFrame = function()
             GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[j][3]:SetPoint ( "LEFT" , GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[j][1] , "RIGHT" );
 
             GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[j][1]:SetScript ( "OnEnter" , function ( self )
-                GRM_GI.BuildFormerMemberTooltip( self , j );
+                GRM_GI.BuildFormerMemberTooltip( self , self.index );
             end);
 
             GRMGI_UI.GRM_GroupButtonFrame.formerMemberNameButtons[j][1]:SetScript ( "OnLeave" , function ()
@@ -643,6 +655,8 @@ GRM_GI.BuildGroupButtonFrame = function()
         if not GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x] then
             local tempButton = CreateFrame ( "Button" , "GRM_GroupInfoFormerMemberButton" .. x , GRMGI_UI.GRM_GroupButtonFrame );
 
+            tempButton.index = x;
+
             GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x] = { tempButton , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) , tempButton:CreateFontString ( nil , "OVERLAY" , "GameFontWhiteTiny" ) };
 
             GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetSize ( minWidth , 15 );
@@ -662,7 +676,7 @@ GRM_GI.BuildGroupButtonFrame = function()
             GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][3]:SetPoint ( "LEFT" , GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1] , "RIGHT" );
 
             GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetScript ( "OnEnter" , function ( self )
-                GRM_GI.BuildServerMemberTooltip( self , x );
+                GRM_GI.BuildServerMemberTooltip( self , self.index );
             end);
 
             GRMGI_UI.GRM_GroupButtonFrame.serverNameButtons[x][1]:SetScript ( "OnLeave" , function ()
@@ -710,6 +724,7 @@ GRM_GI.BuildMemberTooltip = function ( button , ind )
     GameTooltip:SetOwner ( button , "ANCHOR_CURSOR" );
     GameTooltip:AddLine( GRMGI_UI.GRM_GroupButtonFrame.memberNameButtons[ind][2]:GetText() );
     GameTooltip:AddLine ( " " );
+    GameTooltip:AddLine("TEST")
 
     GameTooltip:AddLine ( GRM.L ( "{custom1} to open Player Window" , nil , nil , nil , "|CFFE6CC7F" .. GRM.L ( "Ctrl-Click" ) .. "|r" ) );
     GameTooltip:AddLine ( GRM.L ( "{custom1} to Search the Log for Player" , nil , nil , nil , "|CFFE6CC7F" .. GRM.L ( "Ctrl-Shift-Click" ) .. "|r" ) );
@@ -1302,6 +1317,9 @@ end
 -- What it Does:    Reconfigures the buttons and text of this module to either be colored or greyed out
 -- Purpose:         UX feature greyed out if not in use for obvious disabling and enabling visual cue.
 GRM_UI.ConfigureGroupInfoRules = function()
+    if not GRM_UI.GRM_CoreFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton then
+        return
+    end
     if GRM.S().GIModule.enabled then
         GRM_UI.GRM_CoreFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_EnableGIModuleCheckButton:SetChecked ( true );
 
@@ -1336,7 +1354,6 @@ GRM_UI.LocalizeOptions = function()
     GRM_UI.GRM_CoreFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText:SetFont ( GRM_G.FontChoice , GRM_G.FontModifier + 12 );
     GRM_UI.GRM_CoreFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText:SetText ( GRM.L ( "Disable tooltip. Only show popout window." ) );
     GRM.NormalizeHitRects ( GRM_UI.GRM_CoreFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipCheckButton , GRM_UI.GRM_CoreFrame.GRM_OptionsFrame.GRM_ModulesFrame.GRM_DisableGroupInfoTooltipText );
-
 end
 
 -- No need to delay for addon to load as the LoadGroupInfoModuleSettings will recursively loop until it is ready.
